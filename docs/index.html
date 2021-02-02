@@ -9,51 +9,400 @@
 	</video>
 
 	<script id="fragShader" type="shader-code">
-		uniform vec2 res;//The width and height of our screen
-		uniform sampler2D bufferTexture;//Our input texture
+		uniform vec2 iResolution;	//The width and height of our screen
+		uniform sampler2D bufferTexture;	//Our input texture
 		uniform sampler2D videoTexture;
+
 		uniform float time;
+		uniform int iFrame;
 		void main() {
-			vec2 st = gl_FragCoord.xy / res;
+			vec2 st = gl_FragCoord.xy / iResolution;
 			vec2 uv = st;
 			uv *= 0.998;
 
 			vec4 sum = texture2D(bufferTexture, uv);
 			vec4 src = texture2D(videoTexture, uv);
-			sum.rgb = mix(sum.rbg, src.rgb, 0.01);
+			sum.rgb = mix(sum.rbg, src.rgb, 0.1);
 			gl_FragColor = sum;
 		 	
 		 }
 	</script>
+
+	<script id="fragmentShader_buffer_A" type="x-shader/x-fragment">
+		uniform vec2 iResolution;	//The width and height of our screen
+		uniform sampler2D bufferTexture;	//Our input texture
+		uniform sampler2D imgTexture;
+		//varying vec2 vUv;
+		uniform sampler2D iChannel0;
+
+		uniform float iTime;
+		uniform int iFrame;
+
+		/*
+		void main()
+		{
+			vec2 uv = gl_FragCoord.xy / iResolution.xy;
+			vec4 tex = texture2D(iChannel0, uv);
+			gl_FragColor = tex;
+			//gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+		}
+		*/
+
+/*
+		uniform vec2      iResolution;           // viewport resolution (in pixels)
+		uniform float     iTime;                 // shader playback time (in seconds)
+		uniform float     iTimeDelta;            // render time (in seconds)
+		uniform int       iFrame;                // shader playback frame
+		uniform float     iChannelTime[4];       // channel playback time (in seconds)
+		uniform vec3      iChannelResolution[4]; // channel resolution (in pixels)
+		uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
+		//uniform samplerXX iChannel0..3;          // input channel. XX = 2D/Cube
+		uniform vec4      iDate;                 // (year, month, day, time in seconds)
+		uniform float     iSampleRate;           // sound sample rate (i.e., 44100)
+*/
+
+		vec4 fragColor;
+		
+        // Original by:
+		//2013, George Toledo. Based on tons of glsl sandbox code with additions to make it a filter.
+		//change lightMode and mess with N to change lighting.
+		//displaceMode lets cell noise be affected by texture brightness.
+		//distance formula sets up a mix between linear and manhattan.
+		//webGL and desktop both seem to optimize all conditional stuff fine on this computer.
+
+		// Re-programmed with additional modes by Louise Lessél
+		/// www.louiselessel.com
+		// original here: https://www.shadertoy.com/view/lsf3DS
+
+		//webGL v0.1 Sep. 3, 2013 (desktop, 4/2/13)
+		//webGL v0.2 Sep. 3, 2013 (desktop, 4/2/13). - set uv in main
+		//webGL v0.3 Sep. 3, 2013 (desktop, 4/5/13). - adjust for vid
+
+
+		int lightMode_0_4 = 4;
+		uniform float density_1_100;
+		uniform float zoom_0_1;
+		uniform float UV_OffsetX;
+		uniform float UV_OffsetY;
+		uniform float displaceAmt_0_1;
+		uniform float distFormula_0_1;
+		float edges = 0.05;
+
+		#define density 40.00
+		#define displaceMode 1
+		#define displaceAmt 0.0
+		#define lightMode lightMode_0_4 // 4
+		//distFormula 0 is linear, 1 is manhattan, you can mix between
+		#define distFormula 0.0
+		#define uvOffset vec2(0.02,0.02)
+		#define zoom 0.04
+		// N vec4(0.) for no holes on facet
+		#define N vec4(0.0,0.0,0.0,0.)
+
+		float jitter;
+
+		float jit(float jitter, float lum){
+			if (displaceMode==0)
+				return jitter=lum*displaceAmt;	//more jitter in brighter areas
+			else if (displaceMode==1)
+				return jitter=1.-lum*displaceAmt;	//more jitter in darker areas
+			else
+				return jitter=displaceAmt;	//disregard texture in jitter creation
+		}
+
+		//uses cellular noise for jitter basis
+
+		// Cellular noise ("Worley noise") in 2D in GLSL.
+		// Copyright (c) Stefan Gustavson 2011-04-19. All rights reserved.
+		// This code is released under the conditions of the MIT license.
+		// See LICENSE file for details, located in ZIP file here:
+		// http://webstaff.itn.liu.se/~stegu/GLSL-cellular/
+
+		// Permutation polynomial: (34x^2 + x) mod 289
+		vec3 permute(vec3 x) {
+		return mod((34.0 * x + 1.0) * x, 289.0);
+		}
+		// Cellular noise, returning F1 and F2 in a vec2.
+		// Standard 3x3 search window for good F1 and F2 values
+		vec2 cellular(vec2 P, float jitter, float lum) {
+		#define K 0.142857142857 // 1/7
+		#define Ko 0.428571428571 // 3/7
+
+			vec2 Pi = mod(floor(P), 289.0);
+			vec2 Pf = fract(P);
+			vec3 oi = vec3(-1.0, 0.0, 1.0);
+			vec3 of = vec3(-0.5, 0.5, 1.5);
+			vec3 px = permute(Pi.x + oi);
+			vec3 p = permute(px.x + Pi.y + oi); // p11, p12, p13
+			vec3 ox = fract(p*K) - Ko;
+			vec3 oy = mod(floor(p*K),7.0)*K - Ko;
+			vec3 dx = Pf.x + 0.5 + jit(jitter, lum)*ox;
+			vec3 dy = Pf.y - of + jit(jitter, lum)*oy;
+			
+			vec3 d1 = mix(dx * dx + dy * dy,  abs(dx) + abs(dy), distFormula); // d11, d12 and d13, squared, mixed with not squared
+			p = permute(px.y + Pi.y + oi); // p21, p22, p23
+			ox = fract(p*K) - Ko;
+			oy = mod(floor(p*K),7.0)*K - Ko;
+			dx = Pf.x - 0.5 + jit(jitter, lum)*ox;
+			dy = Pf.y - of + jit(jitter, lum)*oy;
+			vec3 d2 = mix(dx * dx + dy * dy,  abs(dx) + abs(dy), distFormula); // d21, d22 and d23, squared
+			p = permute(px.z + Pi.y + oi); // p31, p32, p33
+			ox = fract(p*K) - Ko;
+			oy = mod(floor(p*K),7.0)*K - Ko;
+			dx = Pf.x - 1.5 + jit(jitter, lum)*ox;
+			dy = Pf.y - of + jit(jitter, lum)*oy;
+			vec3 d3 = mix(dx * dx + dy * dy,  abs(dx) + abs(dy), distFormula); // d31, d32 and d33, squared
+			// Sort out the two smallest distances (F1, F2)
+			vec3 d1a = min(d1, d2);
+			d2 = max(d1, d2); // Swap to keep candidates for F2
+			d2 = min(d2, d3); // neither F1 nor F2 are now in d3
+			d1 = min(d1a, d2); // F1 is now in d1
+			d2 = max(d1a, d2); // Swap to keep candidates for F2
+			d1.xy = (d1.x < d1.y) ? d1.xy : d1.yx; // Swap if smaller
+			d1.xz = (d1.x < d1.z) ? d1.xz : d1.zx; // F1 is in d1.x
+			d1.yz = min(d1.yz, d2.yz); // F2 is now not in d2.yz
+			d1.y = min(d1.y, d1.z); // nor in  d1.z
+			d1.y = min(d1.y, d2.x); // F2 is in d1.y, we're done.
+			return mix(sqrt(d1.xy),d1.xy,distFormula);
+		}
+
+		vec2 cellularID(vec2 P, float jitter, float lum) {
+			vec2 Pi = mod(floor(P), 289.0);
+			vec2 Pf = fract(P);
+			vec3 oi = vec3(-1.0, 0.0, 1.0);
+			vec3 of = vec3(-0.5, 0.5, 1.5);
+			vec3 px = permute(Pi.x + oi);
+			vec3 p = permute(px.x + Pi.y + oi); // p11, p12, p13
+			vec3 ox = fract(p*K) - Ko;
+			vec3 oy = mod(floor(p*K),7.0)*K - Ko;
+			vec3 dx = Pf.x + 0.5 + jit(jitter, lum)*ox;
+			vec3 dy = Pf.y - of + jit(jitter, lum)*oy;
+			vec3 d1 = mix(dx * dx + dy * dy,  abs(dx) + abs(dy), distFormula); // d11, d12 and d13, squared, mixed with not squared
+			p = permute(px.y + Pi.y + oi); // p21, p22, p23
+			ox = fract(p*K) - Ko;
+			oy = mod(floor(p*K),7.0)*K - Ko;
+			dx = Pf.x - 0.5 + jit(jitter, lum)*ox;
+			dy = Pf.y - of + jit(jitter, lum)*oy;
+			vec3 d2 = mix(dx * dx + dy * dy,  abs(dx) + abs(dy), distFormula); // d21, d22 and d23, squared
+			p = permute(px.z + Pi.y + oi); // p31, p32, p33
+			ox = fract(p*K) - Ko;
+			oy = mod(floor(p*K),7.0)*K - Ko;
+			dx = Pf.x - 1.5 + jit(jitter, lum)*ox;
+			dy = Pf.y - of + jit(jitter, lum)*oy;
+			vec3 d3 = mix(dx * dx + dy * dy,  abs(dx) + abs(dy), distFormula); // d31, d32 and d33, squared
+		
+			float f1 = d1.x;
+			vec2 ci = vec2(Pi.x - 1.0, Pi.y - 1.0);
+			if (d1.y < f1) { f1 = d1.y; ci = vec2(Pi.x - 1.0, Pi.y); }
+			if (d1.z < f1) { f1 = d1.z; ci = vec2(Pi.x - 1.0, Pi.y + 1.0); }
+			if (d2.x < f1) { f1 = d2.x; ci = vec2(Pi.x      , Pi.y - 1.0); }
+			if (d2.y < f1) { f1 = d2.y; ci = vec2(Pi.x      , Pi.y); }
+			if (d2.z < f1) { f1 = d2.z; ci = vec2(Pi.x      , Pi.y + 1.0); }
+			if (d3.x < f1) { f1 = d3.x; ci = vec2(Pi.x + 1.0, Pi.y - 1.0); }
+			if (d3.y < f1) { f1 = d3.y; ci = vec2(Pi.x + 1.0, Pi.y); }
+			if (d3.z < f1) { f1 = d3.z; ci = vec2(Pi.x + 1.0, Pi.y + 1.0); }
+			return mod(ci, 289.0);
+		}
+
+		vec3 hsv(const in float h, const in float s, const in float v) {
+			return mix(vec3(1.),clamp((abs(fract(h+vec3(3.,2.,1.)/3.)*6.-3.)-1.),0.,1.),s)*v;
+		}
+
+		//void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+		void main() {
+
+            vec2 uv = (gl_FragCoord.xy / iResolution.xy)*(1.-zoom)+uvOffset;
+			//vec2 uv=(2.-vec2(-gl_FragCoord.xy.x,gl_FragCoord.xy.y)/iResolution.xy)*(1.-zoom)+uvOffset;
+			vec4 tx=texture2D(iChannel0,uv);
+			float lum=length(tx.rgb);
+
+			vec2 position = uv * density;
+			vec2 Fid = cellularID(position, jitter, lum);
+			vec4 tx2=texture2D(iChannel0,Fid/density); 
+			vec2 F = cellular(position, jitter, lum);
+			vec2 Fx = cellular(position-vec2(0.0,0.0), jitter, lum);
+			vec2 Fy = cellular(position-vec2(0.0,0.0), jitter, lum);
+
+			Fx = cellular(position-vec2(10.0,0.0), jitter, lum);
+			Fy = cellular(position-vec2(0.0,10.), jitter, lum);
+			
+			float nBasic = 0.1+(F.y-F.x);
+			nBasic = (F.y-F.x);
+
+			float facets = 0.1+abs(F.y*(N.x+N.y)-F.x);
+			float facetsX = 0.1+abs(Fx.y*(N.x+N.z)-Fx.x);
+			float facetsY = 0.1+abs(Fy.y*(N.x+N.w)-Fy.x);
+			
+			vec3 normalFacet = vec3(facets - facetsX, facets - facetsY, 0.1);
+			vec4 fc = vec4(-dot(normalize(normalFacet),normalize(vec3((uv)-.5,-1.0))));
+
+			if(lightMode==0){
+				vec3 color = vec3(tx2.rgb);
+				fragColor = vec4( color, 1.0);
+			}
+			else if(lightMode==1){
+				vec3 color = vec3(tx2.rgb) * nBasic;	
+				fragColor = vec4( color, 1.0);
+			}
+			else if(lightMode==2){
+				vec3 color = vec3(tx2.rgb) * fc.rgb;	
+				fragColor = vec4( color, 1.0);
+			}	
+			else if(lightMode==3){
+				vec3 color = normalize(normalFacet)+.5;	
+				fragColor = vec4( color, 1.0);
+			}
+			else if(lightMode==4){
+				vec3 mask = vec3(tx2.rgb)* nBasic;
+				if (mask.r < edges) { mask.rgb = vec3(0.);}
+				//if (mask.r < 0.05) { mask.rgb = vec3(0.);}
+				else { mask.rgb = vec3(1.); }
+				vec3 color = vec3(tx2.rgb*mask);
+				fragColor = vec4( color, 1.0);
+			}
+			gl_FragColor = fragColor;
+			
+		}
+		
+
+	
+	  </script>
+
+
+	  <script id="fragmentShader_buffer_B" type="x-shader/x-fragment">
+		uniform vec2 iResolution;	//The width and height of our screen
+		uniform sampler2D bufferTexture;	//Our input texture
+		uniform sampler2D imgTexture;
+		//varying vec2 vUv;
+
+		uniform float iTime;
+		uniform int iFrame;
+
+		 void main()
+		{
+			gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+		}
+	  </script>
+
+	  <script id="fragmentShader_buffer_C" type="x-shader/x-fragment">
+		uniform vec2 iResolution;	//The width and height of our screen
+		uniform sampler2D bufferTexture;	//Our input texture
+		uniform sampler2D imgTexture;
+		//varying vec2 vUv;
+
+		uniform float iTime;
+		uniform int iFrame;
+
+		 void main()
+		{
+			gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+		}
+	  </script>
+
+
+	  <script id="fragmentShader_image" type="x-shader/x-fragment">
+		uniform vec2 iResolution;	//The width and height of our screen
+		uniform sampler2D bufferTexture;	//Our input texture
+		uniform sampler2D imgTexture;
+		//varying vec2 vUv;
+
+		//#define iChannel0 bufferTexture
+
+		uniform float iTime;
+		uniform int iFrame;
+
+
+		 // straight sampling from img or buffer
+		 void main()
+		{
+			vec4 tex = texture2D(bufferTexture, gl_FragCoord.xy / iResolution.xy);
+			gl_FragColor = tex;
+
+			//vec4 img = texture2D(imgTexture, gl_FragCoord.xy / iResolution.xy);
+			//gl_FragColor = mix(tex.rgb, img.rgb, 0.5);
+			//vec2 uv = gl_FragCoord.xy / iResolution.xy;
+			//if(uv.x<0.25) gl_FragColor = vec4(1,1,1,1);
+			
+			//gl_FragColor = vec4(0.,0.,1.,1.);
+		}
+
+		
+	  </script>
+
+
 	<script>
 		var scene;
 		var camera;
+		var buffercamera;
 
 		var renderer;
 		var bufferScene;
+		var bufferScene_A;
+
 		var textureA;
 		var textureB;
+		var textureC;
+		var textureD;
+		var textureImage;
+
 		var bufferMaterial;
+		var bufferMaterial_A;
+		var bufferObject_A;
+
 		var plane;
 		var bufferObject;
+
 		var finalMaterial;
 		var quad;
         var video;
-        var videoTexture;
+		var videoTexture;
+		
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+		const rtWidth = window.innerWidth;
+		const rtHeight =  window.innerHeight;
 
+
+		function init() {
+			//Create buffer textures
+			textureA = new THREE.WebGLRenderTarget( rtWidth, rtHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+			textureB = new THREE.WebGLRenderTarget( rtWidth, rtHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+			textureC = new THREE.WebGLRenderTarget( rtWidth, rtHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+			textureD = new THREE.WebGLRenderTarget( rtWidth, rtHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+		}
 
 		function sceneSetup(){
 			scene = new THREE.Scene();
-			var width = window.innerWidth;
-			var height = window.innerHeight;
 			camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000 );
 			camera.position.z = 2;
+
+			// create fianl texture
+			textureImage = new THREE.WebGLRenderTarget( rtWidth, rtHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+			//finalMaterial =  new THREE.MeshBasicMaterial({map: textureImage.texture});
+			finalMaterial = new THREE.ShaderMaterial( {
+				uniforms: {
+				 bufferTexture: { type: "t", value: textureA.texture },
+				 iResolution : {type: 'v2',value:new THREE.Vector2(window.innerWidth,window.innerHeight)},
+				 //Keeps the resolution
+				 //videoTexture: {type: "t", value: videoTexture },
+				 imgTexture: { type: "t", value: new THREE.TextureLoader().load('textures/img.png') },
+				 iTime: {type:"f",value:Math.random()*Math.PI*2+Math.PI},
+				 iFrame: {type:"i",value: 0}
+				},
+				//fragmentShader: document.getElementById( 'fragShader' ).innerHTML
+				fragmentShader: document.getElementById( 'fragmentShader_image' ).innerHTML
+			} );
+
+			plane = new THREE.PlaneBufferGeometry( window.innerWidth, window.innerHeight );
+			quad = new THREE.Mesh( plane, finalMaterial );
+			scene.add(quad);
 
 			renderer = new THREE.WebGLRenderer();
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
 		}
 
+		/*
 		function videoTextureSetup() {
 			video = document.getElementById( 'video' );
 			videoTexture = new THREE.VideoTexture( video );
@@ -62,66 +411,123 @@
 			videoTexture.magFilter = THREE.LinearFilter;
 			videoTexture.format = THREE.RGBFormat;
 		}
+		*/
+
+		
+
 
 		function bufferTextureSetup(){
+			buffercamera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000 );
+			buffercamera.position.z = 2;
 			//Create buffer scene
-			bufferScene = new THREE.Scene();
-			//Create 2 buffer textures
-			textureA = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
-			textureB = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter} );
-			//Pass textureA to shader
-			bufferMaterial = new THREE.ShaderMaterial( {
+			bufferSceneA = new THREE.Scene();
+			bufferSceneB = new THREE.Scene();
+			bufferSceneC = new THREE.Scene();
+
+			//Pass texture to shader
+			bufferMaterial_A = new THREE.ShaderMaterial( {
 				uniforms: {
 				 bufferTexture: { type: "t", value: textureA.texture },
-				 res : {type: 'v2',value:new THREE.Vector2(window.innerWidth,window.innerHeight)},
+				 iResolution : {type: 'v2',value:new THREE.Vector2(window.innerWidth,window.innerHeight)},
 				 //Keeps the resolution
-				 videoTexture: {type: "t", value: videoTexture },
-				 time: {type:"f",value:Math.random()*Math.PI*2+Math.PI}
+				 //videoTexture: {type: "t", value: videoTexture },
+				 imgTexture: { type: "t", value: new THREE.TextureLoader().load('textures/img.png') },
+				 iChannel0: { type: "t", value: new THREE.TextureLoader().load('textures/img.png') },
+				 iTime: {type:"f",value:Math.random()*Math.PI*2+Math.PI},
+				 iFrame: {type:"i",value: 0}
 				},
-				fragmentShader: document.getElementById( 'fragShader' ).innerHTML
+				//fragmentShader: document.getElementById( 'fragShader' ).innerHTML
+				fragmentShader: document.getElementById( 'fragmentShader_buffer_A' ).innerHTML
 			} );
-			plane = new THREE.PlaneBufferGeometry( window.innerWidth, window.innerHeight );
-			bufferObject = new THREE.Mesh( plane, bufferMaterial );
-			bufferScene.add(bufferObject);
+			//Pass texture to shader
+			bufferMaterial_B = new THREE.ShaderMaterial( {
+				uniforms: {
+				 bufferTexture: { type: "t", value: textureA.texture },
+				 iResolution : {type: 'v2',value:new THREE.Vector2(window.innerWidth,window.innerHeight)},
+				 //Keeps the resolution
+				 //videoTexture: {type: "t", value: videoTexture },
+				 imgTexture: { type: "t", value: new THREE.TextureLoader().load('textures/img.png') },
+				 iChannel0: { type: "t", value: new THREE.TextureLoader().load('textures/img.png') },
+				 iTime: {type:"f",value:Math.random()*Math.PI*2+Math.PI},
+				 iFrame: {type:"i",value: 0}
+				},
+				//fragmentShader: document.getElementById( 'fragShader' ).innerHTML
+				fragmentShader: document.getElementById( 'fragmentShader_buffer_B' ).innerHTML
+			} );
+			//Pass texture to shader
+			bufferMaterial_C = new THREE.ShaderMaterial( {
+				uniforms: {
+				 bufferTexture: { type: "t", value: textureA.texture },
+				 iResolution : {type: 'v2',value:new THREE.Vector2(window.innerWidth,window.innerHeight)},
+				 //Keeps the resolution
+				 //videoTexture: {type: "t", value: videoTexture },
+				 imgTexture: { type: "t", value: new THREE.TextureLoader().load('textures/img.png') },
+				 iChannel0: { type: "t", value: new THREE.TextureLoader().load('textures/img.png') },
+				 iTime: {type:"f",value:Math.random()*Math.PI*2+Math.PI},
+				 iFrame: {type:"i",value: 0}
+				},
+				//fragmentShader: document.getElementById( 'fragShader' ).innerHTML
+				fragmentShader: document.getElementById( 'fragmentShader_buffer_C' ).innerHTML
+			} );
 
-			//Draw textureB to screen 
-			finalMaterial =  new THREE.MeshBasicMaterial({map: textureB});
-			quad = new THREE.Mesh( plane, finalMaterial );
-			scene.add(quad);
+			bufferObject = new THREE.Mesh( plane, bufferMaterial_A );
+			bufferSceneA.add(bufferObject);
+			bufferObject = new THREE.Mesh( plane, bufferMaterial_B );
+			bufferSceneB.add(bufferObject);
+			bufferObject = new THREE.Mesh( plane, bufferMaterial_C );
+			bufferSceneC.add(bufferObject);
 		}
 
-		//Initialize the Threejs scene
+	
+		//Initialize the Threejs scene that will render to the screen
+		init();
+		//videoTextureSetup();
 		sceneSetup();
-
-		//Setup the frame buffer/texture we're going to be rendering to instead of the screen
-		videoTextureSetup();
-
-		bufferTextureSetup();
+		bufferTextureSetup(); //Setup the frame buffer scenes we're going to be rendering to instead of the screen
+		
 
 
 		function render() {
-
 		  requestAnimationFrame( render );
+		  
+		  // Make shader on quad BufferA - change input buffers - Draw bufferScene to textureA
+		  renderer.setRenderTarget(textureA);
+		  renderer.render(bufferSceneA,buffercamera,textureA,true);
+		  //finalMaterial.uniforms.bufferTexture.value = textureA.texture;	// test that it gets passed into image
+		  renderer.setRenderTarget(null);
 
-		  //Draw to textureB
-		  renderer.render(bufferScene,camera,textureB,true);
-			
-		  //Swap textureA and B
-		  var t = textureA;
-		  textureA = textureB;
-		  textureB = t;
-		  quad.material.map = textureB.texture;
-		  bufferMaterial.uniforms.bufferTexture.value = textureA.texture;
+		  // Make shader on quad BufferB - change input buffers - Draw bufferScene to textureB
+		  renderer.setRenderTarget(textureB);
+		  renderer.render(bufferSceneB,buffercamera,textureB,true);
+		  //finalMaterial.uniforms.bufferTexture.value = textureB.texture;	// test that it gets passed into image
+		  renderer.setRenderTarget(null);
 
-		  //Update time
-		  bufferMaterial.uniforms.time.value += 0.01;
+		  // Make shader on quad BufferC - change input buffers - Draw bufferScene to textureC
+		  renderer.setRenderTarget(textureC);
+		  renderer.render(bufferSceneC,buffercamera,textureC,true);
+		  //finalMaterial.uniforms.bufferTexture.value = textureC.texture;	// test that it gets passed into image
+		  renderer.setRenderTarget(null);
 
+		  //Update uniforms
+		  bufferMaterial_A.uniforms.iTime.value += 0.01;
+		  bufferMaterial_A.uniforms.iFrame.value += 1;
+		  bufferMaterial_B.uniforms.iTime.value += 0.01;
+		  bufferMaterial_B.uniforms.iFrame.value += 1;
+		  bufferMaterial_C.uniforms.iTime.value += 0.01;
+		  bufferMaterial_C.uniforms.iFrame.value += 1;
+
+		  finalMaterial.uniforms.bufferTexture.value = textureA.texture;	// test that it gets passed into image
 		  //Finally, draw to the screen
+		  //quad.material.map = textureA.texture;
+		  //quad.material.map = textureImage.texture;
 		  renderer.render( scene, camera );
+
 		}
 		render();
+
 
 
 	</script>
 </body>
 </html>
+
