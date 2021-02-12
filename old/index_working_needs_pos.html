@@ -176,9 +176,10 @@
 
         //const float Key_R = 82.5 / 256.;
 
-        #define t2D(o) texture2D(iChannel0, uv-o/res)               // in 0-1 range
+        #define t2D(o) texture2D(iChannel0, uv-(o/res))               // in 0-1 range
         //#define isKeyHeld(key) texture2D(iChannel3, vec2(key, .2)).r > 0.
         #define dataAt(x) texture2D(iChannel0, vec2(x+.5, .5)/res)
+
         //#define dataAt(x) texture2D(iChannel0, vec2(x, 0.)/res)     // check if halfpoint is necessary
 
 
@@ -206,8 +207,6 @@
             // get current pixel position from last frame - (uv-(0.,0)/res)
             vec2 pos = t2D(o.zz).rg;  // current position, processed from last frame, stored in RG
             
-
-
             // get data about mouse from previous frame - savedPosition
             //vec2 sPos = dataAt(2.).ba;  // moving frame - if mouse hold BA - at (2.5, .5)/res;
             
@@ -221,7 +220,6 @@
             for(int i=0; i<8; i++) {
                 // neighbor's stored position
                 vec2 iPos = t2D(dirs[i]).rg;
-                //vec2 iPos = t2DNEW(dirs[i]).rg;
                 
                 // if circle produced by neighbor is less than the current one, take its position
                 if(length(fc-iPos) < length(fc-pos))
@@ -302,6 +300,7 @@
             }
 
             
+           
 
             // STORE BUTTON STATES - NOT IN USE    
             /*
@@ -311,6 +310,7 @@
                     fragColor.b = isMHeld; // float, if mouse was held in this frame, in B
             */        
             
+
 
             // SANITY CHECKS
 
@@ -460,7 +460,7 @@
             dirs[0] = o.xz; dirs[1] = o.yz; dirs[2] = o.zx; dirs[3] = o.zy;
             
             // current position from the buffer iChannel0
-            vec2 pos = t2D(o.zz).rg;    // mouse coordinate mouse.xy
+            vec2 pos = t2D(o.zz).rg;
             
             // cell and wall
             float c, w = 0.; 
@@ -529,29 +529,22 @@
             
         
             fragColor = col;
-
-
-
-            
-
-
-
-            //  ------- SANITY CHECKS - Show whats in the buffer ------- 
-            //fragColor = texture(iChannel0, uv);
-            //fragColor = texture(iChannel0, vUv);
-
-                        
             //fragColor = tc; // show texture sampler
             //fragColor = vec4(texture2D(iChannel0, pos/res.xy).ba, 0, 1); // show texture sampler
             //fragColor = vec4(pos.rg, 0, 1); // show texture sampler
+
+            
+            // SANITY CHECK - Show whats in the buffer
+            //fragColor = texture(iChannel0, uv);
+            //fragColor = texture(iChannel0, vUv);
 
             // IF THESE CHECKS DON'T WORK, DATA PASSING DOESN'T WORK
             // get that red pixel at coordinate vec2(10.,10.))
             // - color half the image
             if (uv.x > 0.5) {
-                //fragColor = texture2D(iChannel0, vec2(10,10.)/res);    // get red pixel 1,0,0,1 at coordinate.
+                fragColor = texture2D(iChannel0, vec2(10,10.)/res);    // get red pixel 1,0,0,1 at coordinate.
                 //fragColor = vec4( texture2D(iChannel0, vec2(10,10.)/res).ba,  0., 1.); // get the ba component - draws green
-                //fragColor = vec4(dataAt(10.,10.));
+                fragColor = vec4(dataAt(10.,10.));
             }
             // test position data storing
             if (uv.x > 0.5) {
