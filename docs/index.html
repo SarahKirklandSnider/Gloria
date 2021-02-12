@@ -180,7 +180,7 @@
         //#define isKeyHeld(key) texture2D(iChannel3, vec2(key, .2)).r > 0.
         #define dataAt(x) texture2D(iChannel0, vec2(x+.5, .5)/res)
         //#define dataAt(x) texture2D(iChannel0, vec2(x, 0.)/res)     // check if halfpoint is necessary
-
+        //#define t2D(o) texture2D( iChannel0, uv-(0.5+o) / res, -0.0 )
 
         // hash without sine
         // https://www.shadertoy.com/view/4djSRW
@@ -447,6 +447,7 @@
         #define plane(p, n) 1. - abs(dot(p, n))*res.y
         #define dataAt(x,y) texture2D(iChannel0, vec2(x+.5, y+.5)/res)
         //#define dataAt(x,y) texture2D(iChannel0, vec2(x, y)/res)
+        //#define t2D(o) texture2D( iChannel0, (0.5+o) / res, -0.0 )
 
         //void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
         void main() {
