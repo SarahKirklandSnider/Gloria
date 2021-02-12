@@ -418,26 +418,7 @@
 		uniform float iTime;
 		uniform int iFrame;
 		uniform vec4 iMouse;
-		vec4 fragColor;
-
-		/*
-		 // straight sampling from img or buffer
-		 void main()
-		{
-			//vec4 tex = texture2D(bufferTexture, gl_FragCoord.xy / iResolution.xy);
-			vec4 tex = texture2D(iChannel0, vUv);
-            //vec4 tex = texture2D(iChannel1, vUv);
-			gl_FragColor = tex;
-
-			//vec4 img = texture2D(imgTexture, gl_FragCoord.xy / iResolution.xy);
-			//gl_FragColor = mix(tex.rgb, img.rgb, 0.5);
-			//vec2 uv = gl_FragCoord.xy / iResolution.xy;
-			//if(uv.x<0.25) gl_FragColor = vec4(1,1,1,1);
-			
-			//gl_FragColor = vec4(0.,0.,1.,1.);
-		}
-        */
-		
+		vec4 fragColor;		
 		
 		
 		//Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
