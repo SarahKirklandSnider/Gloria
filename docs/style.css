@@ -1,9 +1,11 @@
 
 
+/*
 body {
   margin: 0;
   padding: 0%;
 }
+*/
 
 h1 {
   width: 100%;
@@ -35,11 +37,25 @@ button {
   border-radius: 0%;
 }
 
-overlay {ß
+overlay {
   z-index: 265;
   width: 100%;
   height: 100%;
 }
+
+.video_wrapper {
+  position: relative;
+  /*padding-bottom: 56.25%; /* 16:9, for an aspect ratio of 1:1 change to this value to 100% */ 
+  padding-bottom: 10%;
+  }
+
+.three{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  }
 
 /*
 body {

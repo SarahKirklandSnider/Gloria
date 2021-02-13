@@ -47,6 +47,7 @@ void main() {
     vec2 fc = gl_FragCoord.xy;
     vec2 uv = fc / res;
     vec3 o = vec3(1., -1., 0.);
+    vec2 p = (fc-res/2.)/res.y;
     
     // set up neighborhood filter size 3
     vec2 dirs[8];
@@ -109,6 +110,8 @@ void main() {
     float sphereShape = 64.;
     if(iFrame == 0) {
         if(pow(length(fc/res.y-vec2(.5*res.x/res.y, 0.)), sphereShape) > hash12(uv)) {
+        //if(pow(length(p), 16.)*512.+.01*cos(5.*atan(res.x/res.y)) > hash12(uv)) {
+
             pos = fc;  // multiplying a scalar here is dope
         }
         else {
@@ -548,8 +551,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ------ SCRIPT
 
-let width = 1080;
-let height = 720;
+
+let a = window.innerWidth/window.innerHeight;
+let width = window.innerWidth;// 1080;
+let height = window.innerHeight; // 720;
 
 // SOUND
 let analyser;
