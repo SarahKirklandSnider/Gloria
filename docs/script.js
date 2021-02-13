@@ -29,10 +29,8 @@ uniform float soundTriggered;
 
 #define t2D(o) texture2D(iChannel0, uv-o/res)               // in 0-1 range
 //#define isKeyHeld(key) texture2D(iChannel3, vec2(key, .2)).r > 0.
-
 #define dataAt(x) texture2D(iChannel0, vec2(x+.5, .5)/res)
 //#define dataAt(x) texture2D(iChannel0, vec2(x, 0.)/res)     // check if halfpoint is necessary
-//#define t2D(o) texture2D( iChannel0, uv- (0.5+o) / res, -0.0 )
 
 // hash without sine
 // https://www.shadertoy.com/view/4djSRW
@@ -69,7 +67,6 @@ void main() {
     for(int i=0; i<8; i++) {
         // neighbor's stored position
         vec2 iPos = t2D(dirs[i]).rg;
-        //vec2 iPos = t2DNEW(dirs[i]).rg;
         
         // if circle produced by neighbor is less than the current one, take its position
         if(length(fc-iPos) < length(fc-pos))
@@ -113,7 +110,7 @@ void main() {
     float sphereShape = 64.;
     if(iFrame == 0) {
         if(pow(length(fc/res.y-vec2(.5*res.x/res.y, 0.)), sphereShape) > hash12(uv)) {
-            //pos = fc;  // multiplying a scalar here is dope
+            pos = fc;  // multiplying a scalar here is dope
         }
         else {
             //pos = vec2(-10000.); 
@@ -170,7 +167,7 @@ void main() {
 
     // check that my storing works
     if(floor(fc) == vec2(10.,10.)) {  // make a red pixel at this coordinate
-        fragColor = vec4(1.,0.,0.,1);
+        //fragColor = vec4(1.,0.,0.,1);
     }
     // Does mouse get read?
     //fragColor.rg = mOld/res; 
@@ -231,24 +228,25 @@ void main() {
     
     // overall cell gradients - these will have different effects
     // depending on the color effects used below
-    c = pos.y*0.003;  // overall gradient
+    //c = pos.y*0.003;  // overall gradient
     c = pos.y*0.0023;  // overall gradient
     //c = pos.y*0.003;  // overall gradient
     
     // helpfull other cell based gradients
     // c = 5. * dist; // gradient from center
-    // c += 1.-step(0.005, dist); // draw cell centers
-    
-    
+    // c += 1.-step(0.005, dist); // draw cell centers    
     
     // Get texture color
-    vec4 tc = texture2D(iChannel1, pos/res.xy); // sample from under mouse
+    //vec4 tc = texture2D(iChannel1, pos/res.xy); // sample from under mouse
     //vec4 tc = texture2D(iChannel1, uv); // for debugging
+
+    // Get other texture color 
+    vec4 tc = texture2D(iChannel2, pos/res.xy); // sample from under mouse
 
 
     
     // Make cell walls
-    for(int i=0; i<6; i++) {
+    for(int i=0; i<4; i++) {
         vec2 iPos = t2D(dirs[i]).rg; // sampling from iChannel0 - RG 
         if(pos!=iPos)
             w = max(w, plane(p-mix(pos, iPos, .5)/res.y, normalize(pos-iPos)));
@@ -266,8 +264,8 @@ void main() {
     //vec4 col = vec4(vec3(c), 1.);
     
     // gradient on individual tiles (bump mappy look) + texture sampling (uncomment both)
-    // c = (p-pos/res.y).r; // gradient from left side, or try .g from below, or res.x
-    // vec4 col = vec4(vec3(c) + w , 1.) + tc;
+    //c = (p-pos/res.y).r; // gradient from left side, or try .g from below, or res.x
+    //vec4 col = vec4(vec3(c) + w , 1.) + tc;
     
     // gradient + texture sampling
     //vec4 col = vec4(vec3(c)*tc.rgb + w, 1.);
@@ -275,9 +273,15 @@ void main() {
     // gradient + texture sampling + colored base (r,g,b)
     // vec4 col = vec4(vec3(c)*tc.rgb * vec3(.7, .6, .5) + w, 1.);
 
+    // Soundfade in bottom 
     vec3 shade = vec3(.7, .6, .5);
-    if (uv.y > 0.5) {
-      //shade = shade * soundFade;
+    if (pos.y < res.y / 6.) { //        || pos.y > res.y - (res.y / 6.)) {
+      shade = shade * soundFade *10.;
+    }
+    // ATTEMPT to check if its the one that was just made - doesnt work
+    // probably need to keep last pos for sound until new pos comes in - then maybe multiplier counter fade
+    if (pos.xy == sound.xy) {
+      shade = shade * soundFade *10.;
     }
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
@@ -395,6 +399,7 @@ class App {
     const resolution = new THREE.Vector3(this.width, this.height, window.devicePixelRatio);
     //const inputIMAGE = this.loader.load('https://res.cloudinary.com/di4jisedp/image/upload/v1523722553/wallpaper.jpg');
     const inputIMAGE = this.loader.load('textures/butterfly.png');
+    const inputIMAGE2 = this.loader.load('textures/sabretooth.png');
     this.loader.setCrossOrigin('');
     this.bufferA = new BufferShader(BUFFER_A_FRAG, {
       iFrame: {
@@ -431,6 +436,9 @@ class App {
       },
       iChannel1: {
         value: inputIMAGE
+      },
+      iChannel2: {
+        value: inputIMAGE2
       },
       sound: { value: new THREE.Vector2(0., 0.) },
       soundFade: { value: 0. }, 
