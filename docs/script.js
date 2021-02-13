@@ -20,6 +20,7 @@ uniform float iTime;
 uniform int iFrame;
 uniform vec4 iMouse;
 uniform vec2 sound;
+uniform float soundFade;
 
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
@@ -56,8 +57,6 @@ void main() {
     // get current pixel position from last frame - (uv-(0.,0)/res)
     vec2 pos = t2D(o.zz).rg;  // current position, processed from last frame, stored in RG
     
-
-
     // get data about mouse from previous frame - savedPosition
     //vec2 sPos = dataAt(2.).ba;  // moving frame - if mouse hold BA - at (2.5, .5)/res;
     vec2 mOld = dataAt(0.).ba;  // mouseOld BA - at (0., 0.5)/res
@@ -86,10 +85,15 @@ void main() {
         //vec2 posUnderMouse = iMouse.xy/res;  //texture(iChannel0, iMouse.xy/res).rg; 
         
 
-        // add cell
+        // add cell on mouse
         if(length(fc.xy-iMouse.xy) < length(fc.xy-pos.xy) ){
-            pos = iMouse.xy;
-        }        
+            //pos = iMouse.xy;
+        }
+        // add cell on mouse
+        if(length(fc.xy-sound.xy) < length(fc.xy-pos.xy) ){
+          pos = sound;
+        }
+
         isMHeld = 1.; // mouse was held this frame - will get stored and passed to next frame        
     }
     
@@ -97,10 +101,8 @@ void main() {
     isMHeld = 0.; // mouse was not held this frame 
     }
     
-
     mOld = iMouse.xy;  // mouse on screen - not normalized
     
-
 
         
     // initialize values first frame
@@ -108,7 +110,7 @@ void main() {
     float sphereShape = 64.;
     if(iFrame == 0) {
         if(pow(length(fc/res.y-vec2(.5*res.x/res.y, 0.)), sphereShape) > hash12(uv)) {
-            pos = fc;  // multiplying a scalar here is dope
+            //pos = fc;  // multiplying a scalar here is dope
         }
         else {
             //pos = vec2(-10000.); 
@@ -140,7 +142,6 @@ void main() {
     }
 
     
-
     // STORE BUTTON STATES - NOT IN USE    
     /*
     else
@@ -190,6 +191,7 @@ uniform int iFrame;
 uniform vec4 iMouse;
 vec4 fragColor;
 uniform vec2 sound;
+uniform float soundFade;
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
 // hit R to remove clear buffer and remove all voronoi, then resample by drawing with mouse.
@@ -271,7 +273,7 @@ void main() {
 
     vec3 shade = vec3(.7, .6, .5);
     if (uv.y > 0.5) {
-      shade = shade * sound.x;
+      shade = shade * soundFade;
     }
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
@@ -288,10 +290,6 @@ void main() {
     
 
     fragColor = col;
-
-
-
-    
 
 
 
@@ -323,7 +321,7 @@ void main() {
         //fragColor = vec4( texture2D(iChannel0, iMouse.xy/res)); // 0->1 sample mouse straight from texture
     }
     if (uv.x > 0.5) {
-      //fragColor = vec4(sound.xy, 0.,1.);
+      //fragColor = vec4(soundFade, 0., 0.,1.);
     }
 
     gl_FragColor = fragColor;
@@ -355,6 +353,7 @@ class App {
     this.counter = 0;
 
     this.soundXY = new THREE.Vector2(0., 0.);
+    this.soundFade = 1.0;
 
     // RENDER BUFFERS
     this.targetA = new BufferManager(this.renderer, {
@@ -406,7 +405,8 @@ class App {
       iChannel1: {
         value: inputIMAGE
       },
-      sound: { value: new THREE.Vector2(0., 0.) }
+      sound: { value: new THREE.Vector2(0., 0.) },
+      soundFade: { value: 0. }
     });
     this.bufferB = new BufferShader(BUFFER_B_FRAG, {
       iFrame: {
@@ -424,7 +424,8 @@ class App {
       iChannel1: {
         value: inputIMAGE
       },
-      sound: { value: new THREE.Vector2(0., 0.) }
+      sound: { value: new THREE.Vector2(0., 0.) },
+      soundFade: { value: 0. }
     });
     this.bufferImage = new BufferShader(BUFFER_FINAL_FRAG, {
       iResolution: {
@@ -443,19 +444,23 @@ class App {
     //this.animate();
   }
 
-  setSound(x, y) {
+  setSound(x, y, s) {
     this.soundXY.x = x;
     this.soundXY.y = y;
+    this.soundFade = s;
+    //console.log(this.soundFade);
     //console.log(this.soundXY);
   }
 
   animate() {
     requestAnimationFrame(() => {
       this.bufferA.uniforms['sound'].value = this.soundXY;
+      this.bufferA.uniforms['soundFade'].value = this.soundFade;
       this.bufferA.uniforms['iFrame'].value = this.counter++;
       this.bufferA.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
       this.targetA.render(this.bufferA.scene, this.orthoCamera);
       this.bufferB.uniforms['sound'].value = this.soundXY;
+      this.bufferB.uniforms['soundFade'].value = this.soundFade;
       this.bufferB.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
       this.targetB.render(this.bufferB.scene, this.orthoCamera);
       this.bufferImage.uniforms['iChannel0'].value = this.targetB.readBuffer.texture;
@@ -517,10 +522,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ------ SCRIPT
 
+let width = 1080;
+let height = 720;
+
 // SOUND
 let analyser;
 let data;
-const fftSize = 32;
+const fftSize = 64;
 //const file = './Audio/Mass_Gloria_1-31-21SOUND_HARP ONLY.mp3';
 const file = './Audio/MFTE_ 02_Gloria_96k_24b.m4a';
 
@@ -530,6 +538,7 @@ var startTime = Date.now();
 var timeScalar = 1.;
 var sound = new THREE.Vector2(1., 1.);
 var last_highesti;
+var soundFade;
 
 // shader color
 var sColor = new THREE.Vector3(0., 0., 0);
@@ -546,8 +555,14 @@ const startButton = document.getElementById('startButton'); // there must be a b
 startButton.addEventListener('click', init);
 
 // create texture handling
-let app = new App(1080, 720);
+let app = new App(width, height);
 
+// random function, t is integer if 0, any other num is float
+function rand(min, max, t) {
+  if (t == 0) { var n = Math.floor((Math.random() * max) + min); }
+  else { var n = Math.random() * max + min; }
+  return n;
+}
 
 function initVars() {
   var elapsedMilliseconds = Date.now() - startTime;
@@ -598,7 +613,6 @@ function updateAudio() {
   // find highest energy frequency
   var highestf = 0;
   var highesti = 0;
-
   for (var i = 0; i < data.length; i++) {
     if (highestf < data[i]) {
       highestf = data[i];
@@ -606,6 +620,7 @@ function updateAudio() {
     }
   }
 
+  // assign colors
   if (highesti == 0) sColor = c1;
   if (highesti == 1) sColor = c2;
   if (highesti == 2) sColor = c3;
@@ -615,27 +630,34 @@ function updateAudio() {
   if (last_highesti != highesti) {
     var min = 1;
     var max = 40;
-    id.x = Math.floor((Math.random() * max) + min);
-    id.y = Math.floor((Math.random() * max) + min);
+    id.x = rand(min, max, 1);
+    id.y = rand(min, max, 1);
   }
   //console.log(id);
   //console.log (sColor);
   //console.log(audio.isPlaying);
+  soundFade = analyser.getAverageFrequency() / 255.0; // get the average frequency of the sound
+  //console.log(soundFade);
 
-  // get the average frequency of the sound
-  //console.log(analyser.getAverageFrequency () / 255.0);
-  sound.x = analyser.getAverageFrequency() / 255.0;
-  sound.y = 0.0;
+  if (iTime % 1000 < 2) {
+    console.log(data);
+    console.log(data[3]);
+  }
+  // random new pos
+  if (data[4] > 80) {
+    sound.x = rand(0., width, 1);
+    sound.y = rand(0., height, 1);
+  }
+
 
   // store so we can check if it changed
   last_highesti = highesti;
 }
 
 
-
 function updateVars() {
   //console.log('update');
-  app.setSound(sound.x, sound.y);
+  app.setSound(sound.x, sound.y, soundFade);
 }
 
 
@@ -643,15 +665,15 @@ function animate() {
   requestAnimationFrame(animate);
   updateVars();
   //updateAudio();
-
   if (analyser != null) {
     updateAudio();
   }
-
-
   app.animate();
-}
 
+  var elapsedMilliseconds = Date.now() - startTime;
+  //var elapsedSeconds = elapsedMilliseconds / 1000.;
+  iTime = elapsedMilliseconds * timeScalar;
+}
 
 
 //app.bufferB.uniforms.iChannel0.value = new THREE.TextureLoader().load('textures/mammoth.png');
