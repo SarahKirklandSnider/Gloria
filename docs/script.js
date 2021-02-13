@@ -1,3 +1,4 @@
+'use strict';
 // Port from Shadertoy to THREE.js: https://www.shadertoy.com/view/4sG3WV
 const VERTEX_SHADER = `
     varying vec2 vUv;
@@ -18,6 +19,7 @@ uniform sampler2D iChannel0; // takes buffer of self
 uniform float iTime;
 uniform int iFrame;
 uniform vec4 iMouse;
+uniform vec2 sound;
 
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
@@ -76,7 +78,7 @@ void main() {
     
     // If mouse is held
     bool mouseHeld = true;
-    mouseHeld = iMouse.z>0.;
+    //mouseHeld = iMouse.z>0.;
     
     if(mouseHeld) {
         // cell position under mouse
@@ -106,7 +108,7 @@ void main() {
     float sphereShape = 64.;
     if(iFrame == 0) {
         if(pow(length(fc/res.y-vec2(.5*res.x/res.y, 0.)), sphereShape) > hash12(uv)) {
-            //pos = fc;  // multiplying a scalar here is dope
+            pos = fc;  // multiplying a scalar here is dope
         }
         else {
             //pos = vec2(-10000.); 
@@ -187,6 +189,7 @@ uniform float iTime;
 uniform int iFrame;
 uniform vec4 iMouse;
 vec4 fragColor;
+uniform vec2 sound;
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
 // hit R to remove clear buffer and remove all voronoi, then resample by drawing with mouse.
@@ -209,7 +212,7 @@ void main() {
     dirs[0] = o.xz; dirs[1] = o.yz; dirs[2] = o.zx; dirs[3] = o.zy;
     
     // current position from the buffer iChannel0
-    vec2 pos = t2D(o.zz).rg;    // mouse coordinate mouse.xy
+    vec2 pos = t2D(o.zz).rg;    // mouse coordinates mouse.xy stored
     
     // cell and wall
     float c, w = 0.; 
@@ -224,7 +227,7 @@ void main() {
     // depending on the color effects used below
     c = pos.y*0.003;  // overall gradient
     c = pos.y*0.0023;  // overall gradient
-    c = pos.y*0.003;  // overall gradient
+    //c = pos.y*0.003;  // overall gradient
     
     // helpfull other cell based gradients
     // c = 10. * dist; // gradient from center
@@ -264,7 +267,14 @@ void main() {
     //vec4 col = vec4(vec3(c)*tc.rgb + w, 1.);
     
     // gradient + texture sampling + colored base (r,g,b)
-   vec4 col = vec4(vec3(c)*tc.rgb * vec3(.7, .6, .5) + w, 1.);
+    // vec4 col = vec4(vec3(c)*tc.rgb * vec3(.7, .6, .5) + w, 1.);
+
+    vec3 shade = vec3(.7, .6, .5);
+    if (uv.y > 0.5) {
+      shade = shade * sound.x;
+    }
+
+    vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
     
     
     /*
@@ -312,11 +322,13 @@ void main() {
         //fragColor = vec4( texture2D(iChannel0, iMouse.xy).rg,  0., 1.); // 0->res Yellow
         //fragColor = vec4( texture2D(iChannel0, iMouse.xy/res)); // 0->1 sample mouse straight from texture
     }
+    if (uv.x > 0.5) {
+      //fragColor = vec4(sound.xy, 0.,1.);
+    }
 
     gl_FragColor = fragColor;
 }
 `;
-
 const BUFFER_FINAL_FRAG = `
     uniform sampler2D iChannel0;
     uniform sampler2D iChannel1;
@@ -331,15 +343,20 @@ const BUFFER_FINAL_FRAG = `
     }
 `;
 
+
 class App {
-  constructor() {
-    this.width = 1024;
-    this.height = 512;
+  constructor(inwidth, inheight) {
+    this.width = inwidth;
+    this.height = inheight;
     this.renderer = new THREE.WebGLRenderer();
     this.loader = new THREE.TextureLoader();
     this.mousePosition = new THREE.Vector4();
     this.orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.counter = 0;
+
+    this.soundXY = new THREE.Vector2(0., 0.);
+
+    // RENDER BUFFERS
     this.targetA = new BufferManager(this.renderer, {
       width: this.width,
       height: this.height
@@ -352,6 +369,7 @@ class App {
       width: this.width,
       height: this.height
     });
+    // MOUSE
     this.renderer.setSize(this.width, this.height);
     document.body.appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener('mousedown', () => {
@@ -366,6 +384,7 @@ class App {
       this.mousePosition.setY(this.height - event.clientY);
     });
   }
+
   start() {
     const resolution = new THREE.Vector3(this.width, this.height, window.devicePixelRatio);
     //const inputIMAGE = this.loader.load('https://res.cloudinary.com/di4jisedp/image/upload/v1523722553/wallpaper.jpg');
@@ -382,11 +401,12 @@ class App {
         value: this.mousePosition
       },
       iChannel0: {
-        value: null
+        value: inputIMAGE
       },
       iChannel1: {
-        value: null
-      }
+        value: inputIMAGE
+      },
+      sound: { value: new THREE.Vector2(0., 0.) }
     });
     this.bufferB = new BufferShader(BUFFER_B_FRAG, {
       iFrame: {
@@ -399,11 +419,12 @@ class App {
         value: this.mousePosition
       },
       iChannel0: {
-        value: null
+        value: inputIMAGE
       },
       iChannel1: {
         value: inputIMAGE
       },
+      sound: { value: new THREE.Vector2(0., 0.) }
     });
     this.bufferImage = new BufferShader(BUFFER_FINAL_FRAG, {
       iResolution: {
@@ -419,23 +440,34 @@ class App {
         value: null
       }
     });
-    this.animate();
+    //this.animate();
   }
+
+  setSound(x, y) {
+    this.soundXY.x = x;
+    this.soundXY.y = y;
+    //console.log(this.soundXY);
+  }
+
   animate() {
     requestAnimationFrame(() => {
+      this.bufferA.uniforms['sound'].value = this.soundXY;
       this.bufferA.uniforms['iFrame'].value = this.counter++;
       this.bufferA.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
-      //this.bufferA.uniforms['iChannel1'].value = this.targetB.readBuffer.texture;
       this.targetA.render(this.bufferA.scene, this.orthoCamera);
+      this.bufferB.uniforms['sound'].value = this.soundXY;
       this.bufferB.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
       this.targetB.render(this.bufferB.scene, this.orthoCamera);
       this.bufferImage.uniforms['iChannel0'].value = this.targetB.readBuffer.texture;
       this.bufferImage.uniforms['iChannel1'].value = this.targetA.readBuffer.texture;
       this.targetC.render(this.bufferImage.scene, this.orthoCamera, true);
-      this.animate();
     });
   }
 }
+
+
+//----- SHADER HANDLING
+
 class BufferShader {
   constructor(fragmentShader, uniforms = {}) {
     this.uniforms = uniforms;
@@ -477,6 +509,149 @@ class BufferManager {
     this.swap();
   }
 }
+
 document.addEventListener('DOMContentLoaded', () => {
-  (new App()).start();
+  //(new App()).start();
 });
+
+
+// ------ SCRIPT
+
+// SOUND
+let analyser;
+let data;
+const fftSize = 32;
+//const file = './Audio/Mass_Gloria_1-31-21SOUND_HARP ONLY.mp3';
+const file = './Audio/MFTE_ 02_Gloria_96k_24b.m4a';
+
+var iTime;
+var iFrame;
+var startTime = Date.now();
+var timeScalar = 1.;
+var sound = new THREE.Vector2(1., 1.);
+var last_highesti;
+
+// shader color
+var sColor = new THREE.Vector3(0., 0., 0);
+var id = new THREE.Vector2(0, 0);
+// color palette
+var c1 = new THREE.Vector3(244 / 255, 46 / 255, 86 / 255);
+var c2 = new THREE.Vector3(245 / 255, 210 / 255, 87 / 255);
+var c3 = new THREE.Vector3(199 / 255, 199 / 255, 199 / 255);
+var c4 = new THREE.Vector3(190 / 255, 199 / 255, 92 / 255);
+var c5 = new THREE.Vector3(54 / 255, 93 / 255, 187 / 255);
+
+
+const startButton = document.getElementById('startButton'); // there must be a button for sound
+startButton.addEventListener('click', init);
+
+// create texture handling
+let app = new App(1080, 720);
+
+
+function initVars() {
+  var elapsedMilliseconds = Date.now() - startTime;
+  //var elapsedSeconds = elapsedMilliseconds / 1000.;
+  iTime = elapsedMilliseconds * timeScalar;
+  iFrame = 0;
+}
+
+function init() {
+  console.log('initializing');
+  initVars()
+  animate();
+  app.start();
+  //Hide button
+  const overlay = document.getElementById('overlay');
+  overlay.remove();
+  gloriaSound();
+}
+
+function gloriaSound() {
+  const listener = new THREE.AudioListener();
+  const audio = new THREE.Audio(listener);
+
+  console.log(file);
+
+  //if (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) {
+  const loader = new THREE.AudioLoader();
+  loader.load(file, function (buffer) {
+    audio.setBuffer(buffer);
+    audio.play();
+  });
+  //}
+  //else {
+  // const mediaElement = new Audio(file);
+  // mediaElement.loop = true;
+  // mediaElement.play();
+  // audio.setMediaElementSource(mediaElement);
+  //}
+  analyser = new THREE.AudioAnalyser(audio, fftSize);
+  console.log(analyser);
+}
+
+function updateAudio() {
+  //console.log('updateAudio');  
+  data = analyser.getFrequencyData();
+  //console.log(data);
+
+  // find highest energy frequency
+  var highestf = 0;
+  var highesti = 0;
+
+  for (var i = 0; i < data.length; i++) {
+    if (highestf < data[i]) {
+      highestf = data[i];
+      highesti = i;
+    }
+  }
+
+  if (highesti == 0) sColor = c1;
+  if (highesti == 1) sColor = c2;
+  if (highesti == 2) sColor = c3;
+  if (highesti == 3) sColor = c4;
+  else if (highesti > 3) sColor = c5;
+
+  if (last_highesti != highesti) {
+    var min = 1;
+    var max = 40;
+    id.x = Math.floor((Math.random() * max) + min);
+    id.y = Math.floor((Math.random() * max) + min);
+  }
+  //console.log(id);
+  //console.log (sColor);
+  //console.log(audio.isPlaying);
+
+  // get the average frequency of the sound
+  //console.log(analyser.getAverageFrequency () / 255.0);
+  sound.x = analyser.getAverageFrequency() / 255.0;
+  sound.y = 0.0;
+
+  // store so we can check if it changed
+  last_highesti = highesti;
+}
+
+
+
+function updateVars() {
+  //console.log('update');
+  app.setSound(sound.x, sound.y);
+}
+
+
+function animate() {
+  requestAnimationFrame(animate);
+  updateVars();
+  //updateAudio();
+
+  if (analyser != null) {
+    updateAudio();
+  }
+
+
+  app.animate();
+}
+
+
+
+//app.bufferB.uniforms.iChannel0.value = new THREE.TextureLoader().load('textures/mammoth.png');
