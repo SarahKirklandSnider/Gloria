@@ -43,6 +43,7 @@ float hash12(vec2 p) {
 
 //void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
 void main() {
+    vec2 vUv_ = vUv;
     vec2 res = iResolution.xy;
     vec2 fc = gl_FragCoord.xy;
     vec2 uv = fc / res;
@@ -207,6 +208,7 @@ uniform float soundTriggered;
 
 //void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
 void main() {
+    vec2 vUv_ = vUv;
     vec2 res = iResolution.xy;
     vec2 uv = gl_FragCoord.xy / res;
     vec2 p = gl_FragCoord.xy / res.y;
@@ -230,8 +232,9 @@ void main() {
     
     // overall cell gradients - these will have different effects
     // depending on the color effects used below
+    c = pos.y*0.004;  // overall gradient
     //c = pos.y*0.003;  // overall gradient
-    c = pos.y*0.0023;  // overall gradient
+    //c = pos.y*0.0023;  // overall gradient
     //c = pos.y*0.0015;  // overall gradient
     
     // helpfull other cell based gradients
@@ -288,7 +291,7 @@ void main() {
     }
 
     
-    shade = shade * soundFade *5.;
+    //shade = shade * soundFade *5.;
     
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
@@ -359,10 +362,11 @@ const BUFFER_FINAL_FRAG = `
 
 
 class App {
-  constructor(inwidth, inheight) {
+  constructor(inwidth, inheight, canvas) {
     this.width = inwidth;
     this.height = inheight;
-    this.renderer = new THREE.WebGLRenderer();
+    this.canvas = canvas;
+    this.renderer = new THREE.WebGLRenderer({canvas : this.canvas, antialias: true});
     this.loader = new THREE.TextureLoader();
     this.mousePosition = new THREE.Vector4();
     this.orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -388,6 +392,8 @@ class App {
     // MOUSE
     this.renderer.setSize(this.width, this.height);
     document.body.appendChild(this.renderer.domElement);
+    
+    //document.getElementById("#c").appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener('mousedown', () => {
       this.mousePosition.setZ(1);
       this.counter = 0;
@@ -395,15 +401,42 @@ class App {
     this.renderer.domElement.addEventListener('mouseup', () => {
       this.mousePosition.setZ(0);
     });
-    this.renderer.domElement.addEventListener('mousemove', event => {
-      this.mousePosition.setX(event.clientX);
-      this.mousePosition.setY(this.height - event.clientY);
+    //this.renderer.domElement.addEventListener('mousemove', event => {
+    this.canvas.addEventListener('mousemove', event => {
+      //this.mousePosition.setX(event.clientX);
+      //this.mousePosition.setY(this.height - event.clientY);
+      /*
+      let box = document.querySelector('div');
+      let twidth = box.offsetWidth;
+      let theight = box.offsetHeight;
+      //console.log(twidth);
+      //console.log(box);
+      */
+      const rect = canvas.getBoundingClientRect();
+      //this.mousePosition.setX((event.clientX - rect.left) * canvas.width  / rect.width);
+      //this.mousePosition.setY(((this.height - event.clientY )- rect.top ) * canvas.height / rect.height);
+      this.mousePosition.setX((event.clientX - rect.left));
+      this.mousePosition.setY(((this.height - event.clientY)+ rect.top));
     });
+  }
+
+  // needed if setting up responsive design - add in change in render buffers, targets and uniforms
+  resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
   }
 
   // set up uniforms
   start() {
     const resolution = new THREE.Vector3(this.width, this.height, window.devicePixelRatio);
+    console.log("res");
+    console.log(resolution);
     //const inputIMAGE = this.loader.load('https://res.cloudinary.com/di4jisedp/image/upload/v1523722553/wallpaper.jpg');
     const inputIMAGE = this.loader.load('textures/butterfly.png');
     const inputIMAGE2 = this.loader.load('textures/sabretooth.png');
@@ -495,6 +528,12 @@ class App {
       this.bufferImage.uniforms['iChannel0'].value = this.targetB.readBuffer.texture;
       this.bufferImage.uniforms['iChannel1'].value = this.targetA.readBuffer.texture;
       this.targetC.render(this.bufferImage.scene, this.orthoCamera, true);
+
+      if (this.resizeRendererToDisplaySize(this.renderer)) {
+        const canvas = renderer.domElement;
+        //camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        //camera.updateProjectionMatrix();
+      }
     });
   }
 }
@@ -544,17 +583,24 @@ class BufferManager {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+//document.addEventListener('DOMContentLoaded', () => {
   //(new App()).start();
-});
+//});
 
 
 // ------ SCRIPT
 
-
+const canvas = document.querySelector('#c');
 let a = window.innerWidth/window.innerHeight;
-let width = window.innerWidth;// 1080;
-let height = window.innerHeight; // 720;
+//let width =  window.innerWidth;// 1080;
+//let height = window.innerHeight; // 720;
+//let width = 1080;
+//let height = 720;
+
+let width = canvas.clientWidth;
+let height = canvas.clientHeight;
+console.log('width');
+console.log(width);
 
 // SOUND
 let analyser;
@@ -589,7 +635,7 @@ const startButton = document.getElementById('startButton'); // there must be a b
 startButton.addEventListener('click', init);
 
 // create texture handling
-let app = new App(width, height);
+let app = new App(width, height, canvas);
 
 // random function, t is integer if 0, any other num is float
 function rand(min, max, t) {
@@ -614,6 +660,7 @@ function init() {
   //Hide button
   const overlay = document.getElementById('overlay');
   overlay.remove();
+  //overlay.hidden();
   gloriaSound();
 }
 
@@ -673,6 +720,7 @@ function analyzeAudio() {
   //console.log(audio.isPlaying);
   soundFade = analyser.getAverageFrequency() / 255.0; // get the average frequency of the sound
   //console.log(soundFade);
+  //soundFade = 1.;
 
   /*
   if (iTime % 1000 < 2) {
