@@ -539,6 +539,8 @@ var timeScalar = 1.;
 var sound = new THREE.Vector2(1., 1.);
 var last_highesti;
 var soundFade;
+var last_trigger;
+var triggerTiming = 20;
 
 // shader color
 var sColor = new THREE.Vector3(0., 0., 0);
@@ -569,6 +571,7 @@ function initVars() {
   //var elapsedSeconds = elapsedMilliseconds / 1000.;
   iTime = elapsedMilliseconds * timeScalar;
   iFrame = 0;
+  last_trigger = 0;
 }
 
 function init() {
@@ -644,11 +647,19 @@ function updateAudio() {
     console.log(data[3]);
   }
   // random new pos
-  if (data[4] > 80) {
-    sound.x = rand(0., width, 1);
-    sound.y = rand(0., height, 1);
-  }
+  console.log(iFrame);
+  console.log(last_trigger + triggerTiming);
 
+  if (iFrame > last_trigger + triggerTiming) {
+    if (data[4] > 80) {
+      sound.x = rand(0., width, 1);
+      sound.y = rand(0., height, 1);
+      last_trigger = iFrame;
+    }
+  }
+  if (iFrame > 3000) {
+    triggerTiming = 40;
+  }
 
   // store so we can check if it changed
   last_highesti = highesti;
@@ -673,6 +684,7 @@ function animate() {
   var elapsedMilliseconds = Date.now() - startTime;
   //var elapsedSeconds = elapsedMilliseconds / 1000.;
   iTime = elapsedMilliseconds * timeScalar;
+  iFrame++;
 }
 
 
