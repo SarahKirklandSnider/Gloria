@@ -75,26 +75,25 @@ void main() {
     
     // If mouse is held
     bool mouseHeld = true;
-    //mouseHeld = iMouse.z>0.;
+    mouseHeld = iMouse.z> 0.;
     
     if(mouseHeld) {
         // cell position under mouse
         // uses t-input as a way to map coordinate - not necessary!
         //vec2 posUnderMouse = iMouse.xy/res;  //texture(iChannel0, iMouse.xy/res).rg; 
         
-
         // add cell on mouse
         if(length(fc.xy-iMouse.xy) < length(fc.xy-pos.xy) ){
             pos = iMouse.xy;
         }
-        // add cell on sound
-        if (soundTriggered > 0.) {
-          if(length(fc.xy-sound.xy) < length(fc.xy-pos.xy) ){
-            pos = sound;
-          }
-        }
-
         isMHeld = 1.; // mouse was held this frame - will get stored and passed to next frame        
+    }
+
+    // add cell on sound
+    if (soundTriggered > 0.) {
+      if(length(fc.xy-sound.xy) < length(fc.xy-pos.xy) ){
+        pos = sound;
+      }
     }
     
     else {
@@ -230,18 +229,19 @@ void main() {
     // depending on the color effects used below
     //c = pos.y*0.003;  // overall gradient
     c = pos.y*0.0023;  // overall gradient
-    //c = pos.y*0.003;  // overall gradient
+    //c = pos.y*0.0015;  // overall gradient
     
     // helpfull other cell based gradients
     // c = 5. * dist; // gradient from center
     // c += 1.-step(0.005, dist); // draw cell centers    
     
-    // Get texture color
-    //vec4 tc = texture2D(iChannel1, pos/res.xy); // sample from under mouse
-    //vec4 tc = texture2D(iChannel1, uv); // for debugging
+    // Get texture colors
+    vec4 tc;
 
-    // Get other texture color 
-    vec4 tc = texture2D(iChannel2, pos/res.xy); // sample from under mouse
+    vec4 tc1 = texture2D(iChannel1, pos/res.xy); // sample from under mouse
+    //vec4 tc1 = texture2D(iChannel1, uv); // for debugging
+    vec4 tc2 = texture2D(iChannel2, pos/res.xy); // sample from under mouse
+    tc = mix(tc1,tc2,pos.x/res.x);
 
 
     
@@ -562,7 +562,7 @@ var sound = new THREE.Vector2(1., 1.);
 var last_highesti;
 var soundFade;
 var last_trigger;
-var triggerTiming = 20;
+var triggerTiming = 10;
 var soundTriggered = 0.0;
 
 // shader color
