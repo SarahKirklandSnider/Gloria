@@ -238,9 +238,9 @@ void main() {
     // Get texture colors
     vec4 tc;
 
-    vec4 tc1 = texture2D(iChannel1, pos/res.xy); // sample from under mouse
-    //vec4 tc1 = texture2D(iChannel1, uv); // for debugging
-    vec4 tc2 = texture2D(iChannel2, pos/res.xy); // sample from under mouse
+    vec4 tc1 = texture2D(iChannel1, pos/res.xy);
+    // tc1 = texture2D(iChannel1, uv); // for debugging
+    vec4 tc2 = texture2D(iChannel2, pos/res.xy);
     tc = mix(tc1,tc2,pos.x/res.x);
 
 
@@ -275,14 +275,18 @@ void main() {
 
     // Soundfade in bottom 
     vec3 shade = vec3(.7, .6, .5);
-    if (pos.y < res.y / 6.) { //        || pos.y > res.y - (res.y / 6.)) {
+    if (pos.y < res.y / 6.) {             //        || pos.y > res.y - (res.y / 6.)) {
       shade = shade * soundFade *10.;
     }
     // ATTEMPT to check if its the one that was just made - doesnt work
     // probably need to keep last pos for sound until new pos comes in - then maybe multiplier counter fade
     if (pos.xy == sound.xy) {
-      shade = shade * soundFade *10.;
+      shade = shade * soundFade *c *10.;
     }
+
+    
+    shade = shade * soundFade *5.;
+    
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
     
