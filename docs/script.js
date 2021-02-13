@@ -21,6 +21,7 @@ uniform int iFrame;
 uniform vec4 iMouse;
 uniform vec2 sound;
 uniform float soundFade;
+uniform float soundTriggered;
 
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
@@ -87,11 +88,13 @@ void main() {
 
         // add cell on mouse
         if(length(fc.xy-iMouse.xy) < length(fc.xy-pos.xy) ){
-            //pos = iMouse.xy;
+            pos = iMouse.xy;
         }
-        // add cell on mouse
-        if(length(fc.xy-sound.xy) < length(fc.xy-pos.xy) ){
-          pos = sound;
+        // add cell on sound
+        if (soundTriggered > 0.) {
+          if(length(fc.xy-sound.xy) < length(fc.xy-pos.xy) ){
+            pos = sound;
+          }
         }
 
         isMHeld = 1.; // mouse was held this frame - will get stored and passed to next frame        
@@ -192,6 +195,7 @@ uniform vec4 iMouse;
 vec4 fragColor;
 uniform vec2 sound;
 uniform float soundFade;
+uniform float soundTriggered;
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
 // hit R to remove clear buffer and remove all voronoi, then resample by drawing with mouse.
@@ -232,7 +236,7 @@ void main() {
     //c = pos.y*0.003;  // overall gradient
     
     // helpfull other cell based gradients
-    // c = 10. * dist; // gradient from center
+    // c = 5. * dist; // gradient from center
     // c += 1.-step(0.005, dist); // draw cell centers
     
     
@@ -273,7 +277,7 @@ void main() {
 
     vec3 shade = vec3(.7, .6, .5);
     if (uv.y > 0.5) {
-      shade = shade * soundFade;
+      //shade = shade * soundFade;
     }
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
@@ -322,6 +326,7 @@ void main() {
     }
     if (uv.x > 0.5) {
       //fragColor = vec4(soundFade, 0., 0.,1.);
+      //fragColor = vec4(soundTriggered, 0., 0.,1.);
     }
 
     gl_FragColor = fragColor;
@@ -354,6 +359,7 @@ class App {
 
     this.soundXY = new THREE.Vector2(0., 0.);
     this.soundFade = 1.0;
+    this.soundTriggered = 0.0;
 
     // RENDER BUFFERS
     this.targetA = new BufferManager(this.renderer, {
@@ -384,6 +390,7 @@ class App {
     });
   }
 
+  // set up uniforms
   start() {
     const resolution = new THREE.Vector3(this.width, this.height, window.devicePixelRatio);
     //const inputIMAGE = this.loader.load('https://res.cloudinary.com/di4jisedp/image/upload/v1523722553/wallpaper.jpg');
@@ -406,7 +413,8 @@ class App {
         value: inputIMAGE
       },
       sound: { value: new THREE.Vector2(0., 0.) },
-      soundFade: { value: 0. }
+      soundFade: { value: 0. }, 
+      soundTriggered: { value: 0. }
     });
     this.bufferB = new BufferShader(BUFFER_B_FRAG, {
       iFrame: {
@@ -425,7 +433,8 @@ class App {
         value: inputIMAGE
       },
       sound: { value: new THREE.Vector2(0., 0.) },
-      soundFade: { value: 0. }
+      soundFade: { value: 0. }, 
+      soundTriggered: { value: 0. }
     });
     this.bufferImage = new BufferShader(BUFFER_FINAL_FRAG, {
       iResolution: {
@@ -444,23 +453,28 @@ class App {
     //this.animate();
   }
 
-  setSound(x, y, s) {
+  setSound(x, y, s, sT) {
     this.soundXY.x = x;
     this.soundXY.y = y;
     this.soundFade = s;
+    this.soundTriggered = sT;
     //console.log(this.soundFade);
     //console.log(this.soundXY);
+    //console.log(this.soundTriggered);
   }
 
   animate() {
     requestAnimationFrame(() => {
       this.bufferA.uniforms['sound'].value = this.soundXY;
       this.bufferA.uniforms['soundFade'].value = this.soundFade;
+      this.bufferA.uniforms['soundTriggered'].value = this.soundTriggered;
       this.bufferA.uniforms['iFrame'].value = this.counter++;
       this.bufferA.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
       this.targetA.render(this.bufferA.scene, this.orthoCamera);
       this.bufferB.uniforms['sound'].value = this.soundXY;
       this.bufferB.uniforms['soundFade'].value = this.soundFade;
+      this.bufferB.uniforms['soundTriggered'].value = this.soundTriggered;
+      this.bufferB.uniforms['iFrame'].value = this.counter++;
       this.bufferB.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
       this.targetB.render(this.bufferB.scene, this.orthoCamera);
       this.bufferImage.uniforms['iChannel0'].value = this.targetB.readBuffer.texture;
@@ -541,6 +555,7 @@ var last_highesti;
 var soundFade;
 var last_trigger;
 var triggerTiming = 20;
+var soundTriggered = 0.0;
 
 // shader color
 var sColor = new THREE.Vector3(0., 0., 0);
@@ -608,7 +623,7 @@ function gloriaSound() {
   console.log(analyser);
 }
 
-function updateAudio() {
+function analyzeAudio() {
   //console.log('updateAudio');  
   data = analyser.getFrequencyData();
   //console.log(data);
@@ -642,19 +657,24 @@ function updateAudio() {
   soundFade = analyser.getAverageFrequency() / 255.0; // get the average frequency of the sound
   //console.log(soundFade);
 
+  /*
   if (iTime % 1000 < 2) {
     console.log(data);
     console.log(data[3]);
   }
-  // random new pos
-  console.log(iFrame);
-  console.log(last_trigger + triggerTiming);
+  */
+
+  // random new pos - further into the song, set to less tiles -> higher triggerTiming number
+  //console.log(iFrame);
+  //console.log(last_trigger + triggerTiming);
+  soundTriggered = 0.0;
 
   if (iFrame > last_trigger + triggerTiming) {
     if (data[4] > 80) {
       sound.x = rand(0., width, 1);
       sound.y = rand(0., height, 1);
       last_trigger = iFrame;
+      soundTriggered = 1.0;
     }
   }
   if (iFrame > 3000) {
@@ -668,7 +688,7 @@ function updateAudio() {
 
 function updateVars() {
   //console.log('update');
-  app.setSound(sound.x, sound.y, soundFade);
+  app.setSound(sound.x, sound.y, soundFade, soundTriggered);
 }
 
 
@@ -677,7 +697,7 @@ function animate() {
   updateVars();
   //updateAudio();
   if (analyser != null) {
-    updateAudio();
+    analyzeAudio();
   }
   app.animate();
 
