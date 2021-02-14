@@ -689,6 +689,7 @@ var timeScalar = 1.;
 var sound = new THREE.Vector2(1., 1.);
 var last_highesti;
 var soundFade;
+var last_soundFade = 1.;
 var last_trigger;
 var triggerTiming = 10;
 var soundTriggered = 0.0;
@@ -801,6 +802,7 @@ function analyzeAudio() {
   soundFade = analyser.getAverageFrequency() / 255.0; // get the average frequency of the sound
   //console.log(soundFade);
   //soundFade = 1.;
+  soundFade = (soundFade + last_soundFade) / 2.;
 
   
   if (iTime % 1000 < 2) {
@@ -812,7 +814,7 @@ function analyzeAudio() {
   // random new pos - further into the song, set to less tiles -> higher triggerTiming number
   soundTriggered = 0.0;
   if (iFrame > last_trigger + triggerTiming) {
-    if (data[4] > 80) {
+    if (data[5] > 80) {
       sound.x = rand(0., width, 1);
       sound.y = rand(0., height, 1);
       last_trigger = iFrame;
@@ -834,6 +836,7 @@ function analyzeAudio() {
 
   // store so we can check if it changed
   last_highesti = highesti;
+  last_soundFade = soundFade;
 }
 
 
