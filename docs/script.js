@@ -105,7 +105,6 @@ void main() {
     mOld = iMouse.xy;  // mouse on screen - not normalized
     
 
-        
     // initialize values first frame
     // this is where it makes a sphere at first 
     float sphereShape = 64.;
@@ -196,6 +195,7 @@ uniform vec2 sound;
 uniform float soundFade;
 uniform float soundTriggered;
 uniform float fader;
+uniform vec3 sColor;
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
 // hit R to remove clear buffer and remove all voronoi, then resample by drawing with mouse.
@@ -296,6 +296,18 @@ void main() {
     
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
+
+    // SOUND HARP LIGHT UP
+    // if (pos.x > sound.x) {
+    //   col = vec4(sColor,1.);
+    //   //col = vec4(vec3(c) * sColor * shade + w, 1.);
+    // }
+    if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + 20. && pos.y < sound.y + 20.)) {
+      col = col + vec4(sColor,1.) * soundFade;
+      //col = vec4(vec3(c) * sColor * shade + w, 1.);
+    }
+
+
     
     
     /*
@@ -380,6 +392,7 @@ class App {
     this.fader = 0.0;
     this.fadeTime = 0.002;
     this.timing = 5000.;//51000.0; // song is 6 mins, each animal gets 51 seconds
+    this.sColor = new THREE.Vector3(0.,0.,0.);
 
 
     this.inputIMAGE = this.loader.load('textures/butterfly.png');
@@ -495,7 +508,8 @@ class App {
       sound: { value: new THREE.Vector2(0., 0.) },
       soundFade: { value: 0. },
       soundTriggered: { value: 0. },
-      fader: { value: 0. }
+      fader: { value: 0. },
+      sColor: { value: new THREE.Vector3(0.,0.,0.)}
     });
     this.bufferImage = new BufferShader(BUFFER_FINAL_FRAG, {
       iResolution: {
@@ -514,13 +528,13 @@ class App {
     //this.animate();
   }
 
-  setSound(x, y, s, sT, t) {
-
+  setSound(x, y, s, sT, t, c) {
     this.soundXY.x = x;
     this.soundXY.y = y;
     this.soundFade = s;
     this.soundTriggered = sT;
     this.iTime = t;
+    this.sColor = c;
     //console.log(this.soundFade);
     //console.log(this.soundXY);
     //console.log(this.soundTriggered);
@@ -592,7 +606,7 @@ class App {
         }
       }
       */
-
+      this.bufferB.uniforms['sColor'].value = this.sColor;
       this.bufferB.uniforms['iFrame'].value = this.counter++;
       this.bufferB.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
       this.targetB.render(this.bufferB.scene, this.orthoCamera);
@@ -608,7 +622,6 @@ class App {
     });
   }
 }
-
 
 //----- SHADER HANDLING
 
@@ -658,7 +671,6 @@ class BufferManager {
 //(new App()).start();
 //});
 
-
 // ------ SCRIPT
 
 const canvas = document.querySelector('#c');
@@ -694,6 +706,7 @@ var soundTriggered = 0.0;
 // shader color
 var sColor = new THREE.Vector3(0., 0., 0);
 var id = new THREE.Vector2(0, 0);
+var last_highesti;
 // color palette
 var c1 = new THREE.Vector3(244 / 255, 46 / 255, 86 / 255);
 var c2 = new THREE.Vector3(245 / 255, 210 / 255, 87 / 255);
@@ -763,9 +776,11 @@ function analyzeAudio() {
   data = analyser.getFrequencyData();
   //console.log(data);
 
+  
   // find highest energy frequency
   var highestf = 0;
   var highesti = 0;
+  /*
   for (var i = 0; i < data.length; i++) {
     if (highestf < data[i]) {
       highestf = data[i];
@@ -786,9 +801,8 @@ function analyzeAudio() {
     id.x = rand(min, max, 1);
     id.y = rand(min, max, 1);
   }
-  //console.log(id);
-  //console.log (sColor);
-  //console.log(audio.isPlaying);
+  */
+
   soundFade = analyser.getAverageFrequency() / 255.0; // get the average frequency of the sound
   //console.log(soundFade);
   //soundFade = 1.;
@@ -801,16 +815,20 @@ function analyzeAudio() {
   */
 
   // random new pos - further into the song, set to less tiles -> higher triggerTiming number
-  //console.log(iFrame);
-  //console.log(last_trigger + triggerTiming);
   soundTriggered = 0.0;
-
   if (iFrame > last_trigger + triggerTiming) {
     if (data[4] > 80) {
       sound.x = rand(0., width, 1);
       sound.y = rand(0., height, 1);
       last_trigger = iFrame;
       soundTriggered = 1.0;
+      highesti = rand(0.,5., 0.);
+      console.log(highesti);
+      if (highesti == 0) sColor = c1;
+      if (highesti == 1) sColor = c2;
+      if (highesti == 2) sColor = c3;
+      if (highesti == 3) sColor = c4;
+      else if (highesti > 3) sColor = c5;
     }
   }
   if (iFrame > 3000) {
@@ -824,7 +842,7 @@ function analyzeAudio() {
 
 function updateVars() {
   //console.log('update');
-  app.setSound(sound.x, sound.y, soundFade, soundTriggered, iTime);
+  app.setSound(sound.x, sound.y, soundFade, soundTriggered, iTime,sColor);
 }
 
 
