@@ -299,7 +299,7 @@ void main() {
     float maxTile = (iResolution.x / 100.) * 4.;
     //if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + dist && pos.y < sound.y + dist)) {
     if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + maxTile && pos.y < sound.y + maxTile)) {
-      col = col + vec4(sColor,1.) * soundFade;
+      col = col + vec4(sColor,1.) * soundFade+ 0.1;
       //col = vec4(1.); // DEBUG
     }
 
@@ -390,8 +390,8 @@ class App {
 
 
     this.inputIMAGE = this.loader.load('textures/butterfly.png');
-    this.inputIMAGE2 = this.loader.load('textures/sabretooth.png');
-    this.inputIMAGE3 = this.loader.load('textures/bird.png');
+    this.inputIMAGE2 = this.loader.load('textures/bird.png');
+    this.inputIMAGE3 = this.loader.load('textures/sabretooth.png');
     this.inputIMAGE4 = this.loader.load('textures/wolf.png');
     this.inputIMAGE5 = this.loader.load('textures/mammoth.png');
     this.inputIMAGE6 = this.loader.load('textures/dolphin.png');
@@ -703,11 +703,16 @@ var sColor = new THREE.Vector3(0., 0., 0);
 var id = new THREE.Vector2(0, 0);
 var last_highesti;
 // color palette
-var c1 = new THREE.Vector3(244 / 255, 46 / 255, 86 / 255);
-var c2 = new THREE.Vector3(245 / 255, 210 / 255, 87 / 255);
-var c3 = new THREE.Vector3(199 / 255, 199 / 255, 199 / 255);
-var c4 = new THREE.Vector3(190 / 255, 199 / 255, 92 / 255);
-var c5 = new THREE.Vector3(54 / 255, 93 / 255, 187 / 255);
+// var c1 = new THREE.Vector3(244 / 255, 46 / 255, 86 / 255);
+// var c2 = new THREE.Vector3(245 / 255, 210 / 255, 87 / 255);
+// var c3 = new THREE.Vector3(199 / 255, 199 / 255, 199 / 255);
+// var c4 = new THREE.Vector3(190 / 255, 199 / 255, 92 / 255);
+// var c5 = new THREE.Vector3(54 / 255, 93 / 255, 187 / 255);
+var c1 = new THREE.Vector3(126 / 255, 161 / 255, 74 / 255);
+var c2 = new THREE.Vector3(78 / 255, 165 / 255, 166 / 255);
+var c3 = new THREE.Vector3(236 / 255, 115 / 255, 34 / 255);
+var c4 = new THREE.Vector3(230 / 255, 180 / 255, 0 / 255);
+var c5 = new THREE.Vector3(193 / 255, 62 / 255, 62 / 255);
 
 
 const startButton = document.getElementById('startButton'); // there must be a button for sound
@@ -802,12 +807,12 @@ function analyzeAudio() {
   //console.log(soundFade);
   //soundFade = 1.;
 
-  /*
+  
   if (iTime % 1000 < 2) {
     console.log(data);
-    console.log(data[3]);
+    //console.log(data[3]);
   }
-  */
+  
 
   // random new pos - further into the song, set to less tiles -> higher triggerTiming number
   soundTriggered = 0.0;
@@ -818,7 +823,7 @@ function analyzeAudio() {
       last_trigger = iFrame;
       soundTriggered = 1.0;
       highesti = rand(0.,5., 0.);
-      console.log(highesti);
+      //console.log(highesti);
       if (highesti == 0) sColor = c1;
       if (highesti == 1) sColor = c2;
       if (highesti == 2) sColor = c3;
@@ -826,9 +831,11 @@ function analyzeAudio() {
       else if (highesti > 3) sColor = c5;
     }
   }
+  /*
   if (iFrame > 3000) {
-    triggerTiming = 40;
+    triggerTiming = 5;
   }
+  */
 
   // store so we can check if it changed
   last_highesti = highesti;
