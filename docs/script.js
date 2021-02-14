@@ -380,7 +380,7 @@ class App {
     this.iTime = 0.0;
     this.fader = 0.0;
     this.fadeTime = 0.002;
-    this.timing = 5000.;// 51000.0; // song is 6 mins, each animal gets 51 seconds
+    this.timing = 51000.0; // song is 6 mins, each animal gets 51 seconds
     this.sColor = new THREE.Vector3(0.,0.,0.);
 
 
@@ -392,6 +392,7 @@ class App {
     this.inputIMAGE5 = this.loader.load('textures/mammoth_alt.png');
     this.inputIMAGE6 = this.loader.load('textures/dolphin.png');
     this.inputIMAGE7 = this.loader.load('textures/turtle.png');
+    this.inputIMAGE8 = this.loader.load('textures/white.png');
 
     // RENDER BUFFERS
     this.targetA = new BufferManager(this.renderer, {
@@ -595,6 +596,16 @@ class App {
           //console.log("6");
         }
       }
+      /*
+      if (iTime > this.timing * 7. && iTime < this.timing * 8.) {
+        if (this.fader < 1.0) {
+          this.fader = Math.min(1., this.fader + this.fadeTime);
+          this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
+          this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE8;
+          //console.log("6");
+        }
+      }
+      */
       
       this.bufferB.uniforms['sColor'].value = this.sColor;
       this.bufferB.uniforms['iFrame'].value = this.counter++;
