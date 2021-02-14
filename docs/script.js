@@ -290,24 +290,20 @@ void main() {
     if (pos.xy == sound.xy) {
       shade = shade * soundFade *c *10.;
     }
-
     
     shade = shade * (soundFade) * 5.;
     
-
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
 
-    // SOUND HARP LIGHT UP // 20 is a good number for dist
-    float maxTile = (iResolution.x / 100.) * 2.;
+    // SOUND HARP LIGHT UP  // 20 is a good number for maxTile
+    float maxTile = (iResolution.x / 100.) * 4.;
     //if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + dist && pos.y < sound.y + dist)) {
     if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + maxTile && pos.y < sound.y + maxTile)) {
-      col = col + vec4(sColor,c) * soundFade;
+      col = col + vec4(sColor,1.) * soundFade;
       //col = vec4(1.); // DEBUG
     }
 
 
-    
-    
     /*
     // turn to alpha in case of layering
     float threshold = 0.99;
