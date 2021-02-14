@@ -380,7 +380,7 @@ class App {
     this.iTime = 0.0;
     this.fader = 0.0;
     this.fadeTime = 0.002;
-    this.timing = 51000.0; // song is 6 mins, each animal gets 51 seconds
+    this.timing = 5000.;// 51000.0; // song is 6 mins, each animal gets 51 seconds
     this.sColor = new THREE.Vector3(0.,0.,0.);
 
 
@@ -388,7 +388,8 @@ class App {
     this.inputIMAGE2 = this.loader.load('textures/bird.png');
     this.inputIMAGE3 = this.loader.load('textures/sabertooth.png');
     this.inputIMAGE4 = this.loader.load('textures/wolf.png');
-    this.inputIMAGE5 = this.loader.load('textures/mammoth.png');
+    //this.inputIMAGE5 = this.loader.load('textures/mammoth.png');
+    this.inputIMAGE5 = this.loader.load('textures/mammoth_alt.png');
     this.inputIMAGE6 = this.loader.load('textures/dolphin.png');
     this.inputIMAGE7 = this.loader.load('textures/turtle.png');
 
