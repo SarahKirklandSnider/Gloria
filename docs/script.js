@@ -391,7 +391,7 @@ class App {
 
     this.inputIMAGE = this.loader.load('textures/butterfly.png');
     this.inputIMAGE2 = this.loader.load('textures/bird.png');
-    this.inputIMAGE3 = this.loader.load('textures/sabretooth.png');
+    this.inputIMAGE3 = this.loader.load('textures/sabertooth.png');
     this.inputIMAGE4 = this.loader.load('textures/wolf.png');
     this.inputIMAGE5 = this.loader.load('textures/mammoth.png');
     this.inputIMAGE6 = this.loader.load('textures/dolphin.png');
