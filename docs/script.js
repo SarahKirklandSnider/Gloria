@@ -298,12 +298,8 @@ void main() {
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
 
     // SOUND HARP LIGHT UP
-    // if (pos.x > sound.x) {
-    //   col = vec4(sColor,1.);
-    //   //col = vec4(vec3(c) * sColor * shade + w, 1.);
-    // }
     if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + 20. && pos.y < sound.y + 20.)) {
-      col = col + vec4(sColor,1.) * soundFade;
+      col = col + vec4(sColor,c) * soundFade;
       //col = vec4(vec3(c) * sColor * shade + w, 1.);
     }
 
