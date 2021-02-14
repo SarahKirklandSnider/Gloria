@@ -297,10 +297,12 @@ void main() {
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
 
-    // SOUND HARP LIGHT UP
-    if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + 20. && pos.y < sound.y + 20.)) {
+    // SOUND HARP LIGHT UP // 20 is a good number for dist
+    float maxTile = (iResolution.x / 100.) * 2.;
+    //if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + dist && pos.y < sound.y + dist)) {
+    if (pos.x > sound.x && pos.y > sound.y && (pos.x < sound.x + maxTile && pos.y < sound.y + maxTile)) {
       col = col + vec4(sColor,c) * soundFade;
-      //col = vec4(vec3(c) * sColor * shade + w, 1.);
+      //col = vec4(1.); // DEBUG
     }
 
 
@@ -609,6 +611,7 @@ class App {
       this.bufferImage.uniforms['iChannel0'].value = this.targetB.readBuffer.texture;
       this.bufferImage.uniforms['iChannel1'].value = this.targetA.readBuffer.texture;
       this.targetC.render(this.bufferImage.scene, this.orthoCamera, true);
+      //console.log(this.mousePosition);
 
       if (this.resizeRendererToDisplaySize(this.renderer)) {
         const canvas = renderer.domElement;
