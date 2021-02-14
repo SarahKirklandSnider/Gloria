@@ -285,13 +285,8 @@ void main() {
     if (pos.y < res.y / 6.) {             //        || pos.y > res.y - (res.y / 6.)) {
       shade = shade * soundFade *10.;
     }
-    // ATTEMPT to check if its the one that was just made - doesnt work
-    // probably need to keep last pos for sound until new pos comes in - then maybe multiplier counter fade
-    if (pos.xy == sound.xy) {
-      shade = shade * soundFade *c *10.;
-    }
-    
-    shade = shade * (soundFade) * 5.;
+
+    shade = shade * (soundFade) * 6.;
     
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
 
