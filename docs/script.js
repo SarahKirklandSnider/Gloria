@@ -112,7 +112,6 @@ void main() {
     if(iFrame == 0) {
         if(pow(length(fc/res.y-vec2(.5*res.x/res.y, 0.)), sphereShape) > hash12(uv)) {
         //if(pow(length(p), 16.)*512.+.01*cos(5.*atan(res.x/res.y)) > hash12(uv)) {
-
             pos = fc;  // multiplying a scalar here is dope
         }
         else {
@@ -196,6 +195,7 @@ vec4 fragColor;
 uniform vec2 sound;
 uniform float soundFade;
 uniform float soundTriggered;
+uniform float fader;
 
 //Based on https://www.shadertoy.com/view/4sK3WK by stb - thank you for your help!
 // hit R to remove clear buffer and remove all voronoi, then resample by drawing with mouse.
@@ -243,11 +243,12 @@ void main() {
     
     // Get texture colors
     vec4 tc;
-
     vec4 tc1 = texture2D(iChannel1, pos/res.xy);
     // tc1 = texture2D(iChannel1, uv); // for debugging
     vec4 tc2 = texture2D(iChannel2, pos/res.xy);
-    tc = mix(tc1,tc2,pos.x/res.x);
+
+    // tc = mix(tc1,tc2,pos.x/res.x);   // mix in x-axis
+    tc = mix(tc1,tc2,fader);
 
 
     
@@ -291,7 +292,7 @@ void main() {
     }
 
     
-    //shade = shade * soundFade *5.;
+    shade = shade * (soundFade + 0.1) * 5.;
     
 
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
@@ -366,7 +367,7 @@ class App {
     this.width = inwidth;
     this.height = inheight;
     this.canvas = canvas;
-    this.renderer = new THREE.WebGLRenderer({canvas : this.canvas, antialias: true});
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
     this.loader = new THREE.TextureLoader();
     this.mousePosition = new THREE.Vector4();
     this.orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -375,6 +376,19 @@ class App {
     this.soundXY = new THREE.Vector2(0., 0.);
     this.soundFade = 1.0;
     this.soundTriggered = 0.0;
+    this.iTime = 0.0;
+    this.fader = 0.0;
+    this.fadeTime = 0.002;
+    this.timing = 51000.0; // song is 6 mins, each animal gets 51 seconds
+
+
+    this.inputIMAGE = this.loader.load('textures/butterfly.png');
+    this.inputIMAGE2 = this.loader.load('textures/sabretooth.png');
+    this.inputIMAGE3 = this.loader.load('textures/bird.png');
+    this.inputIMAGE4 = this.loader.load('textures/wolf.png');
+    this.inputIMAGE5 = this.loader.load('textures/mammoth.png');
+    this.inputIMAGE6 = this.loader.load('textures/dolphin.png');
+    this.inputIMAGE7 = this.loader.load('textures/turtle.png');
 
     // RENDER BUFFERS
     this.targetA = new BufferManager(this.renderer, {
@@ -391,8 +405,7 @@ class App {
     });
     // MOUSE
     this.renderer.setSize(this.width, this.height);
-    document.body.appendChild(this.renderer.domElement);
-    
+    //document.body.appendChild(this.renderer.domElement);
     //document.getElementById("#c").appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener('mousedown', () => {
       this.mousePosition.setZ(1);
@@ -416,7 +429,7 @@ class App {
       //this.mousePosition.setX((event.clientX - rect.left) * canvas.width  / rect.width);
       //this.mousePosition.setY(((this.height - event.clientY )- rect.top ) * canvas.height / rect.height);
       this.mousePosition.setX((event.clientX - rect.left));
-      this.mousePosition.setY(((this.height - event.clientY)+ rect.top));
+      this.mousePosition.setY(((this.height - event.clientY) + rect.top));
     });
   }
 
@@ -438,8 +451,7 @@ class App {
     console.log("res");
     console.log(resolution);
     //const inputIMAGE = this.loader.load('https://res.cloudinary.com/di4jisedp/image/upload/v1523722553/wallpaper.jpg');
-    const inputIMAGE = this.loader.load('textures/butterfly.png');
-    const inputIMAGE2 = this.loader.load('textures/sabretooth.png');
+
     this.loader.setCrossOrigin('');
     this.bufferA = new BufferShader(BUFFER_A_FRAG, {
       iFrame: {
@@ -452,13 +464,13 @@ class App {
         value: this.mousePosition
       },
       iChannel0: {
-        value: inputIMAGE
+        value: this.inputIMAGE
       },
       iChannel1: {
-        value: inputIMAGE
+        value: this.inputIMAGE
       },
       sound: { value: new THREE.Vector2(0., 0.) },
-      soundFade: { value: 0. }, 
+      soundFade: { value: 0. },
       soundTriggered: { value: 0. }
     });
     this.bufferB = new BufferShader(BUFFER_B_FRAG, {
@@ -472,17 +484,18 @@ class App {
         value: this.mousePosition
       },
       iChannel0: {
-        value: inputIMAGE
+        value: this.inputIMAGE
       },
       iChannel1: {
-        value: inputIMAGE
+        value: this.inputIMAGE
       },
       iChannel2: {
-        value: inputIMAGE2
+        value: this.inputIMAGE2
       },
       sound: { value: new THREE.Vector2(0., 0.) },
-      soundFade: { value: 0. }, 
-      soundTriggered: { value: 0. }
+      soundFade: { value: 0. },
+      soundTriggered: { value: 0. },
+      fader: { value: 0. }
     });
     this.bufferImage = new BufferShader(BUFFER_FINAL_FRAG, {
       iResolution: {
@@ -501,15 +514,18 @@ class App {
     //this.animate();
   }
 
-  setSound(x, y, s, sT) {
+  setSound(x, y, s, sT, t) {
+
     this.soundXY.x = x;
     this.soundXY.y = y;
     this.soundFade = s;
     this.soundTriggered = sT;
+    this.iTime = t;
     //console.log(this.soundFade);
     //console.log(this.soundXY);
     //console.log(this.soundTriggered);
   }
+
 
   animate() {
     requestAnimationFrame(() => {
@@ -522,6 +538,59 @@ class App {
       this.bufferB.uniforms['sound'].value = this.soundXY;
       this.bufferB.uniforms['soundFade'].value = this.soundFade;
       this.bufferB.uniforms['soundTriggered'].value = this.soundTriggered;
+
+      this.bufferB.uniforms['fader'].value = this.fader;
+
+      // fader starts at 0.0 inputting iChannel 1
+      if (iTime > this.timing * 1. && iTime < this.timing * 2.) {
+        if (this.fader < 1.0) {
+          this.fader = Math.min(1., this.fader + this.fadeTime);
+          this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE;
+          this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE2;
+          //console.log("2");
+        }
+      }
+      if (iTime > this.timing * 2. && iTime < this.timing * 3.) {
+        if (this.fader > 0.0) {
+          this.fader = Math.max(0., this.fader - this.fadeTime);
+          this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE3;
+          this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE2;
+          //console.log("3");
+        }
+      }
+      if (iTime > this.timing * 3. && iTime < this.timing * 4.) {
+        if (this.fader < 1.0) {
+          this.fader = Math.min(1., this.fader + this.fadeTime);
+          this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE3;
+          this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE4;
+          //console.log("4");
+        }
+      }
+      if (iTime > this.timing * 4. && iTime < this.timing * 5.) {
+        if (this.fader > 0.0) {
+          this.fader = Math.max(0., this.fader - this.fadeTime);
+          this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE5;
+          this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE4;
+          //console.log("5");
+        }
+      }
+      if (iTime > this.timing * 5. && iTime < this.timing * 6.) {
+        if (this.fader < 1.0) {
+          this.fader = Math.min(1., this.fader + this.fadeTime);
+          this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE5;
+          this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE6;
+          //console.log("6");
+        }
+      }
+      if (iTime > this.timing * 6. && iTime < this.timing * 7.) {
+        if (this.fader > 0.0) {
+          this.fader = Math.max(0., this.fader - this.fadeTime);
+          this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
+          this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE6;
+          //console.log("6");
+        }
+      }
+
       this.bufferB.uniforms['iFrame'].value = this.counter++;
       this.bufferB.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
       this.targetB.render(this.bufferB.scene, this.orthoCamera);
@@ -584,14 +653,14 @@ class BufferManager {
 }
 
 //document.addEventListener('DOMContentLoaded', () => {
-  //(new App()).start();
+//(new App()).start();
 //});
 
 
 // ------ SCRIPT
 
 const canvas = document.querySelector('#c');
-let a = window.innerWidth/window.innerHeight;
+let a = window.innerWidth / window.innerHeight;
 //let width =  window.innerWidth;// 1080;
 //let height = window.innerHeight; // 720;
 //let width = 1080;
@@ -753,7 +822,7 @@ function analyzeAudio() {
 
 function updateVars() {
   //console.log('update');
-  app.setSound(sound.x, sound.y, soundFade, soundTriggered);
+  app.setSound(sound.x, sound.y, soundFade, soundTriggered, iTime);
 }
 
 
