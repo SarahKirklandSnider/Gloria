@@ -385,7 +385,7 @@ class App {
     this.iTime = 0.0;
     this.fader = 0.0;
     this.fadeTime = 0.002;
-    this.timing = 5000.;//51000.0; // song is 6 mins, each animal gets 51 seconds
+    this.timing = 51000.0; // song is 6 mins, each animal gets 51 seconds
     this.sColor = new THREE.Vector3(0.,0.,0.);
 
 
@@ -548,8 +548,8 @@ class App {
       this.bufferB.uniforms['soundTriggered'].value = this.soundTriggered;
 
       this.bufferB.uniforms['fader'].value = this.fader;
-      this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE5;
-      /*
+      //this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE5;
+      
       // fader starts at 0.0 inputting iChannel 1
       if (iTime > this.timing * 1. && iTime < this.timing * 2.) {
         if (this.fader < 1.0) {
@@ -599,7 +599,7 @@ class App {
           //console.log("6");
         }
       }
-      */
+      
       this.bufferB.uniforms['sColor'].value = this.sColor;
       this.bufferB.uniforms['iFrame'].value = this.counter++;
       this.bufferB.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
