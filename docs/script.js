@@ -282,11 +282,10 @@ void main() {
 
     // Soundfade in bottom 
     vec3 shade = vec3(.7, .6, .5);
+    shade = shade * (soundFade) * 6.;
     if (pos.y < res.y / 6.) {             //        || pos.y > res.y - (res.y / 6.)) {
       shade = shade * soundFade *10.;
     }
-
-    shade = shade * (soundFade) * 6.;
     
     vec4 col = vec4(vec3(c)*tc.rgb * shade + w, 1.);
 
@@ -386,6 +385,7 @@ class App {
     this.takeShot = false;
 
     this.inputIMAGE = this.loader.load('textures/butterfly.png');
+    
     this.inputIMAGE2 = this.loader.load('textures/bird.png');
     this.inputIMAGE3 = this.loader.load('textures/sabertooth.png');
     this.inputIMAGE4 = this.loader.load('textures/wolf.png');
