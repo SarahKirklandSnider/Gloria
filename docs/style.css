@@ -26,7 +26,7 @@ h1 {
   font-weight: 300;
   font-size: xx-large;
   text-align: center;
-  padding: 5% 0%;
+  padding: 5% 0% 0% 0%;
 }
 
 
@@ -41,23 +41,37 @@ h2 {
   text-align: center;
 }
 
+
 button {
   z-index: 265;
-  width: 100%;
-  height: 100%;
+  width: 20%;
+  height: 20%;
   display: block;
   border: 0.00em transparent;
-  /*margin: auto;*/
   font-family: 'Roboto', sans-serif;
   font-weight: 200;
-  font-size: x-large;
+  font-size: medium;
   color: #000000;
   text-align: center;
   background-color: transparent;
-  /*transition: all 0.2s;*/
-  padding: 10%;
+  padding: 5%;
+  margin-bottom: 5%;
   border-radius: 0%;
 }
+
+.flex-parent {
+  display: flex;
+}
+
+.jc-center {
+  justify-content: center;
+
+}
+
+button.margin-right {
+  margin-right: 0px;
+}
+
 
 overlay {
   position: relative; /*absolute*/

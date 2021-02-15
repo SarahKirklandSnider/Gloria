@@ -596,6 +596,7 @@ class App {
           //console.log("6");
         }
       }
+      // FADE TO NOTHING
       /*
       if (iTime > this.timing * 7. && iTime < this.timing * 8.) {
         if (this.fader < 1.0) {
@@ -711,11 +712,6 @@ var sColor = new THREE.Vector3(0., 0., 0);
 var id = new THREE.Vector2(0, 0);
 var last_highesti;
 // color palette
-// var c1 = new THREE.Vector3(244 / 255, 46 / 255, 86 / 255);
-// var c2 = new THREE.Vector3(245 / 255, 210 / 255, 87 / 255);
-// var c3 = new THREE.Vector3(199 / 255, 199 / 255, 199 / 255);
-// var c4 = new THREE.Vector3(190 / 255, 199 / 255, 92 / 255);
-// var c5 = new THREE.Vector3(54 / 255, 93 / 255, 187 / 255);
 var c1 = new THREE.Vector3(126 / 255, 161 / 255, 74 / 255);
 var c2 = new THREE.Vector3(78 / 255, 165 / 255, 166 / 255);
 var c3 = new THREE.Vector3(236 / 255, 115 / 255, 34 / 255);
@@ -723,8 +719,21 @@ var c4 = new THREE.Vector3(230 / 255, 180 / 255, 0 / 255);
 var c5 = new THREE.Vector3(193 / 255, 62 / 255, 62 / 255);
 
 
-const startButton = document.getElementById('startButton'); // there must be a button for sound
-startButton.addEventListener('click', init);
+//const startButton = document.getElementById('startButton'); // there must be a button for sound
+//startButton.addEventListener('click', init);
+
+function toggleError(button) { 
+  if ( button.className === 'visible' ) {
+      //alert('Error has been hidden!');
+      button.className = '';
+      button.innerHTML ='Play';
+  } else {
+      //alert('Error has been shown!');
+      init();
+      button.className = 'visible';
+      button.innerHTML ='Reset';
+  }
+}
 
 // create texture handling
 let app = new App(width, height, canvas);
