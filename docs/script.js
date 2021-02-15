@@ -379,7 +379,7 @@ class App {
     this.iTime = 0.0;
     this.fader = 0.0;
     this.fadeTime = 0.002;
-    this.timing = 5000.;//51000.0; // song is 6 mins, each animal gets 51 seconds
+    this.timing = 51000.0; // song is 6 mins, each animal gets 51 seconds
     this.sColor = new THREE.Vector3(0., 0., 0.);
 
     this.takeShot = false;
@@ -659,9 +659,8 @@ class App {
         }
       }
       // FADE TO NOTHING
-
-      if (iTime > this.timing * 7.) {
-      //if (iTime > 324000.) {
+      //if (iTime > this.timing * 7.) {
+      if (iTime > 324000.) {
         if (this.fader < 1.0) {
           this.fader = Math.min(1., this.fader + this.fadeTime);
           this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
