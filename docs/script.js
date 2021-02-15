@@ -727,6 +727,9 @@ function toggleError(button) {
       //alert('Error has been hidden!');
       button.className = '';
       button.innerHTML ='Play';
+      location.reload();
+      return false;
+      
   } else {
       //alert('Error has been shown!');
       init();

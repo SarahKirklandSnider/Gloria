@@ -58,6 +58,10 @@ button {
   margin-bottom: 5%;
   border-radius: 0%;
 }
+button:focus {
+  outline:none;
+  box-shadow: none;
+}
 
 .flex-parent {
   display: flex;
