@@ -381,8 +381,9 @@ class App {
     this.fader = 0.0;
     this.fadeTime = 0.002;
     this.timing = 51000.0; // song is 6 mins, each animal gets 51 seconds
-    this.sColor = new THREE.Vector3(0.,0.,0.);
+    this.sColor = new THREE.Vector3(0., 0., 0.);
 
+    this.takeShot = false;
 
     this.inputIMAGE = this.loader.load('textures/butterfly.png');
     this.inputIMAGE2 = this.loader.load('textures/bird.png');
@@ -393,6 +394,10 @@ class App {
     this.inputIMAGE6 = this.loader.load('textures/dolphin.png');
     this.inputIMAGE7 = this.loader.load('textures/turtle.png');
     this.inputIMAGE8 = this.loader.load('textures/white.png');
+
+    document.querySelector( '#screenshot' ).addEventListener( 'click', () => {
+      this.takeScreenshot(this.width, this.height);
+    } );
 
     // RENDER BUFFERS
     this.targetA = new BufferManager(this.renderer, {
@@ -409,6 +414,7 @@ class App {
     });
     // MOUSE
     this.renderer.setSize(this.width, this.height);
+    //renderer.setPixelRatio( window.devicePixelRatio );
     //document.body.appendChild(this.renderer.domElement);
     //document.getElementById("#c").appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener('mousedown', () => {
@@ -447,6 +453,62 @@ class App {
       renderer.setSize(width, height, false);
     }
     return needResize;
+  }
+
+  // document.querySelector( '#screenshot' ).addEventListener( 'click', () => {
+  //   takeScreenshot( widthInput.value, heightInput.value );
+  //  } );
+
+  takeScreenshot(width, height) {
+    // set camera and renderer to desired screenshot dimension
+    //this.orthoCamera.aspect = width / height;
+    //orthoCamera.updateProjectionMatrix();
+    //this.renderer.setSize(  width, height );
+    //this.renderer.render( scene, camera, null, false );
+    this.takeShot = true;
+
+    //this.targetC.render(this.bufferImage.scene, this.orthoCamera, true);
+
+    //const dataURL = this.renderer.domElement.toDataURL('image/png');
+
+    // save
+    //this.saveDataURI(this.defaultFileName('.png'), dataURL);
+
+    // reset to old dimensions (cheat version)
+    //onWindowResize();
+  }
+  
+  
+  dataURIToBlob( dataURI ) {
+    const binStr = window.atob( dataURI.split( ',' )[1] );
+    const len = binStr.length;
+    const arr = new Uint8Array( len );
+    for ( let i = 0; i < len; i++ ) {
+      arr[i] = binStr.charCodeAt( i );
+    }
+    return new window.Blob( [arr] );
+  }
+
+  saveDataURI(name, dataURI) {
+    const blob = this.dataURIToBlob(dataURI);
+
+    // force download
+    const link = document.createElement('a');
+    link.download = name;
+    link.href = window.URL.createObjectURL(blob);
+    link.onclick = () => {
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(blob);
+        link.removeAttribute('href');
+      }, 500);
+
+    };
+    link.click();
+  }
+
+  defaultFileName (ext) {
+    const str = `${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}${ext}`;
+    return str.replace(/\//g, '-').replace(/:/g, '.');
   }
 
   // set up uniforms
@@ -500,7 +562,7 @@ class App {
       soundFade: { value: 0. },
       soundTriggered: { value: 0. },
       fader: { value: 0. },
-      sColor: { value: new THREE.Vector3(0.,0.,0.)}
+      sColor: { value: new THREE.Vector3(0., 0., 0.) }
     });
     this.bufferImage = new BufferShader(BUFFER_FINAL_FRAG, {
       iResolution: {
@@ -546,7 +608,7 @@ class App {
 
       this.bufferB.uniforms['fader'].value = this.fader;
       //this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE5;
-      
+
       // fader starts at 0.0 inputting iChannel 1
       if (iTime > this.timing * 1. && iTime < this.timing * 2.) {
         if (this.fader < 1.0) {
@@ -607,7 +669,7 @@ class App {
         }
       }
       */
-      
+
       this.bufferB.uniforms['sColor'].value = this.sColor;
       this.bufferB.uniforms['iFrame'].value = this.counter++;
       this.bufferB.uniforms['iChannel0'].value = this.targetA.readBuffer.texture;
@@ -616,6 +678,12 @@ class App {
       this.bufferImage.uniforms['iChannel1'].value = this.targetA.readBuffer.texture;
       this.targetC.render(this.bufferImage.scene, this.orthoCamera, true);
       //console.log(this.mousePosition);
+      if (this.takeShot) {
+        const dataURL = this.renderer.domElement.toDataURL('image/png');
+        // save
+        this.saveDataURI(this.defaultFileName('.png'), dataURL);
+        this.takeShot = false;
+      }
 
       if (this.resizeRendererToDisplaySize(this.renderer)) {
         const canvas = renderer.domElement;
@@ -722,19 +790,19 @@ var c5 = new THREE.Vector3(193 / 255, 62 / 255, 62 / 255);
 //const startButton = document.getElementById('startButton'); // there must be a button for sound
 //startButton.addEventListener('click', init);
 
-function toggleError(button) { 
-  if ( button.className === 'visible' ) {
-      //alert('Error has been hidden!');
-      button.className = '';
-      button.innerHTML ='Play';
-      location.reload();
-      return false;
-      
+function toggleError(button) {
+  if (button.className === 'visible') {
+    //alert('Error has been hidden!');
+    button.className = '';
+    button.innerHTML = 'Play';
+    location.reload();
+    return false;
+
   } else {
-      //alert('Error has been shown!');
-      init();
-      button.className = 'visible';
-      button.innerHTML ='Reset';
+    //alert('Error has been shown!');
+    init();
+    button.className = 'visible';
+    button.innerHTML = 'Reset';
   }
 }
 
@@ -796,7 +864,7 @@ function analyzeAudio() {
   data = analyser.getFrequencyData();
   //console.log(data);
 
-  
+
   // find highest energy frequency
   var highestf = 0;
   var highesti = 0;
@@ -828,12 +896,12 @@ function analyzeAudio() {
   //soundFade = 1.;
   soundFade = (soundFade + last_soundFade) / 2.;
 
-  
+
   if (iTime % 1000 < 2) {
     console.log(data);
     //console.log(data[3]);
   }
-  
+
 
   // random new pos - further into the song, set to less tiles -> higher triggerTiming number
   soundTriggered = 0.0;
@@ -843,7 +911,7 @@ function analyzeAudio() {
       sound.y = rand(0., height, 1);
       last_trigger = iFrame;
       soundTriggered = 1.0;
-      highesti = rand(0.,5., 0.);
+      highesti = rand(0., 5., 0.);
       //console.log(highesti);
       if (highesti == 0) sColor = c1;
       if (highesti == 1) sColor = c2;
@@ -866,7 +934,7 @@ function analyzeAudio() {
 
 function updateVars() {
   //console.log('update');
-  app.setSound(sound.x, sound.y, soundFade, soundTriggered, iTime,sColor);
+  app.setSound(sound.x, sound.y, soundFade, soundTriggered, iTime, sColor);
 }
 
 
