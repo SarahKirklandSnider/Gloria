@@ -1,5 +1,11 @@
 'use strict';
-// Port from Shadertoy to THREE.js: https://www.shadertoy.com/view/4sG3WV
+// Code by Louise Lessél www.louiselessel.com
+// For Candyststions www.candystations.com
+// Port from Shadertoy to THREE.js: https://www.shadertoy.com/view/WltfzB
+// Image sampling voronoi - draw with mouse
+// Voronoi based on https://www.shadertoy.com/view/4sK3WK by stb
+// Three.js adapted from https://discourse.threejs.org/t/help-porting-shadertoy-to-threejs/2441 by milewski
+
 const VERTEX_SHADER = `
     varying vec2 vUv;
     
@@ -650,7 +656,7 @@ class App {
           //console.log("6");
         }
       }
-      if (iTime > this.timing * 6. && iTime < this.timing * 7.) {
+      if (iTime > this.timing * 6. && iTime < 326000.) {
         if (this.fader > 0.0) {
           this.fader = Math.max(0., this.fader - this.fadeTime);
           this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
@@ -666,6 +672,7 @@ class App {
           this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
           this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE8;
           //console.log("6");
+          console.log(this.fader);
         }
       }
 
@@ -896,12 +903,12 @@ function analyzeAudio() {
   //soundFade = 1.;
   soundFade = (soundFade + last_soundFade) / 2.;
 
-
+/*
   if (iTime % 1000 < 2) {
     console.log(data);
     //console.log(data[3]);
   }
-
+*/
 
   // random new pos - further into the song, set to less tiles -> higher triggerTiming number
   soundTriggered = 0.0;
@@ -946,6 +953,11 @@ function animate() {
     analyzeAudio();
   }
   app.animate();
+  
+  // if (iTime % 1000 < 2) {
+  //   console.log(iTime);
+  // }
+  
 
   var elapsedMilliseconds = Date.now() - startTime;
   //var elapsedSeconds = elapsedMilliseconds / 1000.;
