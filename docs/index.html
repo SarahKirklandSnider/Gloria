@@ -14,8 +14,6 @@
   <div id="text">
     <h1 align="center">Gloria</h1>
   </div>
-  <div id="overlay">
-  </div>
 
   <div class="flex-parent jc-center">
     <button id="startButton" onclick="toggleError(this)">Play</button>
@@ -23,8 +21,17 @@
   </div>
   
   <canvas id="c">
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/91/three.min.js'></script>
-    <script src="./script.js"></script>
+    <!--    
+     <script type='module' src= 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r91/three.module.js'></script>
+     <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/91/three.min.js'></script>
+     -->
+     <script src="./build/three.min.js"></script>
+     <script src="./EffectComposer.js"></script>
+     <script src="./RenderPass.js"></script>
+     <script src="./ShaderPass.js"></script>
+     <script src="./CopyShader.js"></script>
+     <script src="./FXAAShader.js"></script>
+     <script src="./script.js"></script>
   </canvas>
 
   <div id="bottomtext">

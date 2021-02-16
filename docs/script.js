@@ -1,10 +1,19 @@
-'use strict';
-// Code by Louise Lessél www.louiselessel.com
-// For Candyststions www.candystations.com
-// Port from Shadertoy to THREE.js: https://www.shadertoy.com/view/WltfzB
-// Image sampling voronoi - draw with mouse
-// Voronoi based on https://www.shadertoy.com/view/4sK3WK by stb
-// Three.js adapted from https://discourse.threejs.org/t/help-porting-shadertoy-to-threejs/2441 by milewski
+// 'use strict';
+//import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r91/three.module.js';
+//import { EffectComposer } from './js/postprocessing/EffectComposer.js';
+//import { RenderPass } from './js/postprocessing/RenderPass.js';
+//import { ShaderPass } from './js/postprocessing/ShaderPass.js';
+//import { CopyShader } from './js/shaders/CopyShader.js';
+//import { FXAAShader } from './js/shaders/FXAAShader.js';
+
+
+
+// Code by Louise Lessél, www.louiselessel.com
+// For Candystations, www.candystations.com
+// Image sampling voronoi for Gloria, Mass For The Endangered, by Sarah Kirkland Snider www.sarahkirklandsnider.com
+// Based on this shader: https://www.shadertoy.com/view/WltfzB
+// Voronoi based on original shader https://www.shadertoy.com/view/4sK3WK by stb
+// Three.js code adapted from https://discourse.threejs.org/t/help-porting-shadertoy-to-threejs/2441 by milewski
 
 const VERTEX_SHADER = `
     varying vec2 vUv;
@@ -368,6 +377,7 @@ const BUFFER_FINAL_FRAG = `
 `;
 
 
+
 class App {
   constructor(inwidth, inheight, canvas) {
     this.width = inwidth;
@@ -387,11 +397,9 @@ class App {
     this.fadeTime = 0.002;
     this.timing = 51000.0; // song is 6 mins, each animal gets 51 seconds
     this.sColor = new THREE.Vector3(0., 0., 0.);
-
     this.takeShot = false;
 
     this.inputIMAGE = this.loader.load('textures/butterfly.png');
-    
     this.inputIMAGE2 = this.loader.load('textures/bird.png');
     this.inputIMAGE3 = this.loader.load('textures/sabertooth.png');
     this.inputIMAGE4 = this.loader.load('textures/wolf.png');
@@ -401,9 +409,9 @@ class App {
     this.inputIMAGE7 = this.loader.load('textures/turtle.png');
     this.inputIMAGE8 = this.loader.load('textures/black.png');
 
-    document.querySelector( '#screenshot' ).addEventListener( 'click', () => {
+    document.querySelector('#screenshot').addEventListener('click', () => {
       this.takeScreenshot(this.width, this.height);
-    } );
+    });
 
     // RENDER BUFFERS
     this.targetA = new BufferManager(this.renderer, {
@@ -483,16 +491,16 @@ class App {
     // reset to old dimensions (cheat version)
     //onWindowResize();
   }
-  
-  
-  dataURIToBlob( dataURI ) {
-    const binStr = window.atob( dataURI.split( ',' )[1] );
+
+
+  dataURIToBlob(dataURI) {
+    const binStr = window.atob(dataURI.split(',')[1]);
     const len = binStr.length;
-    const arr = new Uint8Array( len );
-    for ( let i = 0; i < len; i++ ) {
-      arr[i] = binStr.charCodeAt( i );
+    const arr = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      arr[i] = binStr.charCodeAt(i);
     }
-    return new window.Blob( [arr] );
+    return new window.Blob([arr]);
   }
 
   saveDataURI(name, dataURI) {
@@ -512,7 +520,7 @@ class App {
     link.click();
   }
 
-  defaultFileName (ext) {
+  defaultFileName(ext) {
     const str = `${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}${ext}`;
     return str.replace(/\//g, '-').replace(/:/g, '.');
   }
@@ -656,7 +664,7 @@ class App {
           //console.log("6");
         }
       }
-      if (iTime > this.timing * 6. && iTime < 326000.) {
+      if (iTime > this.timing * 6. && iTime < 320000.) {
         if (this.fader > 0.0) {
           this.fader = Math.max(0., this.fader - this.fadeTime);
           this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
@@ -666,13 +674,13 @@ class App {
       }
       // FADE TO NOTHING
       //if (iTime > this.timing * 7.) {
-      if (iTime > 324000.) {
+      if (iTime > 320000.) {
         if (this.fader < 1.0) {
           this.fader = Math.min(1., this.fader + this.fadeTime);
           this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
           this.bufferB.uniforms['iChannel2'].value = this.inputIMAGE8;
+          //sColor = sColor * new THREE.Vector3(this.fader);
           //console.log("6");
-          console.log(this.fader);
         }
       }
 
@@ -693,7 +701,7 @@ class App {
       }
 
       if (this.resizeRendererToDisplaySize(this.renderer)) {
-        const canvas = renderer.domElement;
+        const canvas = this.renderer.domElement;
         //camera.aspect = canvas.clientWidth / canvas.clientHeight;
         //camera.updateProjectionMatrix();
       }
@@ -729,6 +737,7 @@ class BufferManager {
       stencilBuffer: false
     });
     this.writeBuffer = this.readBuffer.clone();
+    this.composer1;
   }
   swap() {
     const temp = this.readBuffer;
@@ -738,6 +747,30 @@ class BufferManager {
   render(scene, camera, toScreen = false) {
     if (toScreen) {
       this.renderer.render(scene, camera);
+/*
+      //this.renderer.autoClear = false;
+      //this.renderer.setPixelRatio( window.devicePixelRatio );
+      //this.renderer.setSize( container.offsetWidth, container.offsetHeight );
+			const container = document.getElementById( 'c' );
+      const halfWidth = container.width / 2;
+      //this.renderer.render(scene, camera);
+      //this.renderer.setViewport( 0, 0, halfWidth, container.height );
+
+      this.renderPass = new THREE.RenderPass( scene,camera );
+      this.fxaaPass = new THREE.ShaderPass( THREE.FXAAShader );
+      //const pixelRatio = this.renderer.getPixelRatio();
+			// this.fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
+			// this.fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
+      this.fxaaPass.material.uniforms[ 'resolution' ].value.x = container.width;
+			this.fxaaPass.material.uniforms[ 'resolution' ].value.y = container.height;
+      
+      this.composer1 = new THREE.EffectComposer( this.renderer);
+      this.composer1.addPass(this.renderPass);
+      //this.composer1.addPass(this.fxaaPass);
+      //this.renderer.setViewport( halfWidth, 0, halfWidth, container.height );
+      this.composer1.render();
+      */
+
     } else {
       this.renderer.render(scene, camera, this.writeBuffer, true);
     }
@@ -764,6 +797,7 @@ console.log('width');
 console.log(width);
 
 // SOUND
+let audio;
 let analyser;
 let data;
 const fftSize = 64;
@@ -836,16 +870,12 @@ function init() {
   initVars()
   animate();
   app.start();
-  //Hide button
-  const overlay = document.getElementById('overlay');
-  overlay.remove();
-  //overlay.hidden();
   gloriaSound();
 }
 
 function gloriaSound() {
   const listener = new THREE.AudioListener();
-  const audio = new THREE.Audio(listener);
+  audio = new THREE.Audio(listener);
 
   console.log(file);
 
@@ -864,6 +894,7 @@ function gloriaSound() {
   //}
   analyser = new THREE.AudioAnalyser(audio, fftSize);
   console.log(analyser);
+  console.log(audio.isPlaying);
 }
 
 function analyzeAudio() {
@@ -875,40 +906,17 @@ function analyzeAudio() {
   // find highest energy frequency
   var highestf = 0;
   var highesti = 0;
-  /*
-  for (var i = 0; i < data.length; i++) {
-    if (highestf < data[i]) {
-      highestf = data[i];
-      highesti = i;
-    }
-  }
-
-  // assign colors
-  if (highesti == 0) sColor = c1;
-  if (highesti == 1) sColor = c2;
-  if (highesti == 2) sColor = c3;
-  if (highesti == 3) sColor = c4;
-  else if (highesti > 3) sColor = c5;
-
-  if (last_highesti != highesti) {
-    var min = 1;
-    var max = 40;
-    id.x = rand(min, max, 1);
-    id.y = rand(min, max, 1);
-  }
-  */
 
   soundFade = analyser.getAverageFrequency() / 255.0; // get the average frequency of the sound
   //console.log(soundFade);
   //soundFade = 1.;
   soundFade = (soundFade + last_soundFade) / 2.;
-
-/*
-  if (iTime % 1000 < 2) {
-    console.log(data);
-    //console.log(data[3]);
-  }
-*/
+  /*
+    if (iTime % 1000 < 2) {
+      console.log(data);
+      //console.log(data[3]);
+    }
+  */
 
   // random new pos - further into the song, set to less tiles -> higher triggerTiming number
   soundTriggered = 0.0;
@@ -936,6 +944,11 @@ function analyzeAudio() {
   // store so we can check if it changed
   last_highesti = highesti;
   last_soundFade = soundFade;
+
+  if (iTime > 324000.) {
+    console.log(audio.isPlaying);
+  }
+
 }
 
 
@@ -953,16 +966,18 @@ function animate() {
     analyzeAudio();
   }
   app.animate();
-  
+
   // if (iTime % 1000 < 2) {
   //   console.log(iTime);
   // }
-  
+
 
   var elapsedMilliseconds = Date.now() - startTime;
   //var elapsedSeconds = elapsedMilliseconds / 1000.;
   iTime = elapsedMilliseconds * timeScalar;
   iFrame++;
+
+
 }
 
 
