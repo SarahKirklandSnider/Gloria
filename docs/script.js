@@ -663,7 +663,7 @@ class App {
           //console.log("6");
         }
       }
-      if (iTime > this.timing * 6. && iTime < 320000.) {
+      if (iTime > this.timing * 6. && iTime < 340000.) {
         if (this.fader > 0.0) {
           this.fader = Math.max(0., this.fader - this.fadeTime);
           this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
@@ -673,7 +673,7 @@ class App {
       }
       // FADE TO NOTHING
       //if (iTime > this.timing * 7.) {
-      if (iTime > 320000.) {
+      if (iTime > 340000.) {
         if (this.fader < 1.0) {
           this.fader = Math.min(1., this.fader + this.fadeTime);
           this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE7;
@@ -901,8 +901,8 @@ function gloriaSound() {
   // audio.setMediaElementSource(mediaElement);
   //}
   analyser = new THREE.AudioAnalyser(audio, fftSize);
-  console.log(analyser);
-  console.log(audio.isPlaying);
+  //console.log(analyser);
+  //console.log(audio.isPlaying);
 }
 
 function analyzeAudio() {
@@ -943,20 +943,10 @@ function analyzeAudio() {
       else if (highesti > 3) sColor = c5;
     }
   }
-  /*
-  if (iFrame > 3000) {
-    triggerTiming = 5;
-  }
-  */
 
   // store so we can check if it changed
   last_highesti = highesti;
   last_soundFade = soundFade;
-
-  if (iTime > 324000.) {
-    console.log(audio.isPlaying);
-  }
-
 }
 
 
@@ -969,7 +959,6 @@ function updateVars() {
 function animate() {
   requestAnimationFrame(animate);
   updateVars();
-  //updateAudio();
   if (analyser != null) {
     analyzeAudio();
   }
@@ -978,7 +967,6 @@ function animate() {
   // if (iTime % 1000 < 2) {
   //   console.log(iTime);
   // }
-
 
   var elapsedMilliseconds = Date.now() - startTime;
   //var elapsedSeconds = elapsedMilliseconds / 1000.;
@@ -990,7 +978,3 @@ function animate() {
 initVars()
 animate();
 app.start();
-
-
-
-//app.bufferB.uniforms.iChannel0.value = new THREE.TextureLoader().load('textures/mammoth.png');
