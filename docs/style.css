@@ -11,6 +11,9 @@ canvas {
   display: block;
   margin:auto;
   margin-bottom: 5vh;
+  /*background-image: url('./textures/mammoth_placeholder.jpeg');
+  background-repeat: no-repeat;
+  background-size: 100% 80vh;*/
 }
 
 h1 {
@@ -21,8 +24,7 @@ h1 {
   font-family: 'Roboto', sans-serif;
   font-weight: 300;
   font-size: xx-large;
-  text-align: center;
-  
+  text-align: center;  
 }
 
 

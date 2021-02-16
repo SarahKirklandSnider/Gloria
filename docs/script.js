@@ -403,7 +403,6 @@ class App {
     this.inputIMAGE2 = this.loader.load('textures/bird.png');
     this.inputIMAGE3 = this.loader.load('textures/sabertooth.png');
     this.inputIMAGE4 = this.loader.load('textures/wolf.png');
-    //this.inputIMAGE5 = this.loader.load('textures/mammoth.png');
     this.inputIMAGE5 = this.loader.load('textures/mammoth_alt.png');
     this.inputIMAGE6 = this.loader.load('textures/dolphin.png');
     this.inputIMAGE7 = this.loader.load('textures/turtle.png');
@@ -783,7 +782,14 @@ class BufferManager {
 //});
 
 // ------ SCRIPT
+/*
+const domItem = document.querySelector("#c");
+const newItem = document.createElement('#c');
+//newItem.innerHTML = '<a href="/products">Products</a>';
+newItem.innerHTML = '<canvas id="c">  <script src="./build/three.min.js"></script> <script src="./EffectComposer.js"></script><script src="./RenderPass.js"></script><script src="./ShaderPass.js"></script><script src="./CopyShader.js"></script><script src="./FXAAShader.js"></script><script src="./script.js"></script></canvas>'
+domItem.parentNode.replaceChild(newItem, domItem);
 
+*/
 const canvas = document.querySelector('#c');
 let a = window.innerWidth / window.innerHeight;
 //let width =  window.innerWidth;// 1080;
@@ -810,8 +816,8 @@ var startTime = Date.now();
 var timeScalar = 1.;
 var sound = new THREE.Vector2(1., 1.);
 var last_highesti;
-var soundFade;
-var last_soundFade = 1.;
+var soundFade = 0.;
+var last_soundFade = 0.;
 var last_trigger;
 var triggerTiming = 10;
 var soundTriggered = 0.0;
@@ -865,11 +871,12 @@ function initVars() {
   last_trigger = 0;
 }
 
+// initiate on button press
 function init() {
   console.log('initializing');
-  initVars()
-  animate();
-  app.start();
+  // initVars()
+  // animate();
+  // app.start();
   gloriaSound();
 }
 
@@ -976,9 +983,13 @@ function animate() {
   //var elapsedSeconds = elapsedMilliseconds / 1000.;
   iTime = elapsedMilliseconds * timeScalar;
   iFrame++;
-
-
 }
+
+// initiate before button press
+initVars()
+animate();
+app.start();
+
 
 
 //app.bufferB.uniforms.iChannel0.value = new THREE.TextureLoader().load('textures/mammoth.png');
