@@ -864,6 +864,7 @@ function rand(min, max, t) {
 }
 
 function initVars() {
+  startTime = Date.now();
   var elapsedMilliseconds = Date.now() - startTime;
   //var elapsedSeconds = elapsedMilliseconds / 1000.;
   iTime = elapsedMilliseconds * timeScalar;
@@ -874,7 +875,7 @@ function initVars() {
 // initiate on button press
 function init() {
   console.log('initializing');
-  // initVars()
+  initVars()
   // animate();
   // app.start();
   gloriaSound();
