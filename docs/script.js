@@ -870,8 +870,10 @@ function init() {
   // animate();
   // app.start();
   app.fader = 0.0;
-  isMobile();
-  gloriaSound();
+  // only start sound from a computer
+  if (!isMobile()) {
+    gloriaSound();
+  }
 }
 
 function gloriaSound() {
