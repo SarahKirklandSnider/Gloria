@@ -1,13 +1,3 @@
-// 'use strict';
-//import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r91/three.module.js';
-//import { EffectComposer } from './js/postprocessing/EffectComposer.js';
-//import { RenderPass } from './js/postprocessing/RenderPass.js';
-//import { ShaderPass } from './js/postprocessing/ShaderPass.js';
-//import { CopyShader } from './js/shaders/CopyShader.js';
-//import { FXAAShader } from './js/shaders/FXAAShader.js';
-
-
-
 // Code by Louise Lessél, www.louiselessel.com
 // For Candystations, www.candystations.com
 // Image sampling voronoi for Gloria, Mass For The Endangered, by Sarah Kirkland Snider www.sarahkirklandsnider.com
@@ -15,6 +5,8 @@
 // Voronoi based on original shader https://www.shadertoy.com/view/4sK3WK by stb
 // Three.js code adapted from https://discourse.threejs.org/t/help-porting-shadertoy-to-threejs/2441 by milewski
 
+ //'use strict';
+ // ------ SHADERS
 const VERTEX_SHADER = `
     varying vec2 vUv;
     
@@ -376,8 +368,7 @@ const BUFFER_FINAL_FRAG = `
     }
 `;
 
-
-
+// ------ BUFFER APP
 class App {
   constructor(inwidth, inheight, canvas) {
     this.width = inwidth;
@@ -428,8 +419,6 @@ class App {
     // MOUSE
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio( window.devicePixelRatio );
-    //document.body.appendChild(this.renderer.domElement);
-    //document.getElementById("#c").appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener('mousedown', () => {
       this.mousePosition.setZ(1);
       this.counter = 0;
@@ -520,11 +509,11 @@ class App {
   // set up uniforms
   start() {
     const resolution = new THREE.Vector3(this.width, this.height, window.devicePixelRatio);
-    console.log("res");
-    console.log(resolution);
+    //console.log("res");
+    //console.log(resolution);
     //const inputIMAGE = this.loader.load('https://res.cloudinary.com/di4jisedp/image/upload/v1523722553/wallpaper.jpg');
-
     this.loader.setCrossOrigin('');
+    
     this.bufferA = new BufferShader(BUFFER_A_FRAG, {
       iFrame: {
         value: 0
@@ -599,7 +588,7 @@ class App {
     //console.log(this.soundTriggered);
   }
 
-
+  // run update loop
   animate() {
     requestAnimationFrame(() => {
       this.bufferA.uniforms['sound'].value = this.soundXY;
@@ -611,7 +600,6 @@ class App {
       this.bufferB.uniforms['sound'].value = this.soundXY;
       this.bufferB.uniforms['soundFade'].value = this.soundFade;
       this.bufferB.uniforms['soundTriggered'].value = this.soundTriggered;
-
       this.bufferB.uniforms['fader'].value = this.fader;
       //this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE5;
 
@@ -705,8 +693,7 @@ class App {
     });
   }
 }
-
-//----- SHADER HANDLING
+// ------ SHADER HANDLING
 
 class BufferShader {
   constructor(fragmentShader, uniforms = {}) {
@@ -744,30 +731,30 @@ class BufferManager {
   render(scene, camera, toScreen = false) {
     if (toScreen) {
       this.renderer.render(scene, camera);
-/*
-      //this.renderer.autoClear = false;
+      
+      /*
+      // With effectcomposer antialias it runs heavier and looks worse
+      this.renderer.autoClear = false;
       //this.renderer.setPixelRatio( window.devicePixelRatio );
-      //this.renderer.setSize( container.offsetWidth, container.offsetHeight );
-			const container = document.getElementById( 'c' );
-      const halfWidth = container.width / 2;
-      //this.renderer.render(scene, camera);
-      //this.renderer.setViewport( 0, 0, halfWidth, container.height );
+      //const pixelRatio = this.renderer.getPixelRatio();
 
       this.renderPass = new THREE.RenderPass( scene,camera );
       this.fxaaPass = new THREE.ShaderPass( THREE.FXAAShader );
-      //const pixelRatio = this.renderer.getPixelRatio();
+
+      const canvas = document.querySelector('#c');
+      let cwidth = canvas.clientWidth;
+      let cheight = canvas.clientHeight;
 			// this.fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
 			// this.fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
-      this.fxaaPass.material.uniforms[ 'resolution' ].value.x = container.width;
-			this.fxaaPass.material.uniforms[ 'resolution' ].value.y = container.height;
+      this.fxaaPass.material.uniforms[ 'resolution' ].value.x = 1/ cwidth;
+			this.fxaaPass.material.uniforms[ 'resolution' ].value.y = 1/ cheight;
       
       this.composer1 = new THREE.EffectComposer( this.renderer);
       this.composer1.addPass(this.renderPass);
-      //this.composer1.addPass(this.fxaaPass);
-      //this.renderer.setViewport( halfWidth, 0, halfWidth, container.height );
+      this.composer1.addPass(this.fxaaPass);
+      this.fxaaPass.renderToScreen = true;
       this.composer1.render();
       */
-
     } else {
       this.renderer.render(scene, camera, this.writeBuffer, true);
     }
@@ -779,16 +766,8 @@ class BufferManager {
 //(new App()).start();
 //});
 
-// ------ SCRIPT
 
-// ADD STUFF FOR IF THREE JS DIDNT LOAD + IF USER ON MOBILE
-/*
-const domItem = document.querySelector("#c");
-const newItem = document.createElement('#c');
-//newItem.innerHTML = '<a href="/products">Products</a>';
-newItem.innerHTML = '<canvas id="c">  <script src="./build/three.min.js"></script> <script src="./EffectComposer.js"></script><script src="./RenderPass.js"></script><script src="./ShaderPass.js"></script><script src="./CopyShader.js"></script><script src="./FXAAShader.js"></script><script src="./script.js"></script></canvas>'
-domItem.parentNode.replaceChild(newItem, domItem);
-*/
+// ------ SCRIPT
 
 const canvas = document.querySelector('#c');
 let a = window.innerWidth / window.innerHeight;
@@ -805,6 +784,7 @@ let data;
 const fftSize = 64;
 const file = './Audio/MFTE_ 02_Gloria_96k_24b.m4a';
 
+// TIMING
 var iTime;
 var iFrame;
 var startTime = Date.now();
@@ -865,7 +845,7 @@ function initVars() {
 
 // initiate on button press
 function init() {
-  console.log('initializing');
+  //console.log('initializing');
   initVars()
   // animate();
   // app.start();
@@ -879,8 +859,7 @@ function init() {
 function gloriaSound() {
   const listener = new THREE.AudioListener();
   audio = new THREE.Audio(listener);
-
-  console.log(file);
+  //console.log(file);
 
   //if (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) {
   const loader = new THREE.AudioLoader();
@@ -984,3 +963,4 @@ function animate() {
 initVars()
 animate();
 app.start();
+console.log("Code by Louise Lessél, www.louiselessel.com - For Candystations, www.candystations.com - Image sampling voronoi for Gloria, Mass For The Endangered, by Sarah Kirkland Snider www.sarahkirklandsnider.com. - Based on this shader: https://www.shadertoy.com/view/WltfzB - Voronoi based on original shader https://www.shadertoy.com/view/4sK3WK by stb - Three.js code adapted from https://discourse.threejs.org/t/help-porting-shadertoy-to-threejs/2441 by milewski");
