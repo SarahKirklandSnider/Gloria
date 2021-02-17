@@ -11,16 +11,19 @@
 </head>
 
 <body>
-  <div id="text">
-    <h1 align="center">Gloria</h1>
-  </div>
+<div id='wrapper'>
+  <div id='header'>
+    <h1 >Gloria</h1>
+  
 
   <div class="flex-parent jc-center">
     <button id="startButton" onclick="toggleError(this)">Play</button>
     <button id="screenshot">Save</button>
   </div>
+</div>
   
-  <canvas id="c">
+  <div id='canvasContainer'>
+      <canvas id="c">
     <!--    
      <script type='module' src= 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r91/three.module.js'></script>
      <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/91/three.min.js'></script>
@@ -33,8 +36,12 @@
      <script src="./FXAAShader.js"></script>
      <script src="./script.js"></script>
   </canvas>
+  </div>
 
-  <div id="bottomtext">
+
+   <div id='footer'>
+     <p></p>
+   </div>
     <!-- <h1 align="center">Gloria</h1> 
     <h2 align="center">Bottom text lorem Ipsum dolor sit amed</h2>
   -->
