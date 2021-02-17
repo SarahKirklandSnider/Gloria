@@ -427,7 +427,7 @@ class App {
     });
     // MOUSE
     this.renderer.setSize(this.width, this.height);
-    //renderer.setPixelRatio( window.devicePixelRatio );
+    this.renderer.setPixelRatio( window.devicePixelRatio );
     //document.body.appendChild(this.renderer.domElement);
     //document.getElementById("#c").appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener('mousedown', () => {
@@ -455,7 +455,7 @@ class App {
       this.mousePosition.setY(((this.height - event.clientY) + rect.top));
     });
   }
-
+/*
   // needed if setting up responsive design - add in change in render buffers, targets and uniforms
   resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
@@ -467,30 +467,23 @@ class App {
     }
     return needResize;
   }
-
-  // document.querySelector( '#screenshot' ).addEventListener( 'click', () => {
-  //   takeScreenshot( widthInput.value, heightInput.value );
-  //  } );
+  */
 
   takeScreenshot(width, height) {
+    // This resizing wont work with our shader, so the resolution is locked to the display ratio user is drawing at
     // set camera and renderer to desired screenshot dimension
     //this.orthoCamera.aspect = width / height;
     //orthoCamera.updateProjectionMatrix();
     //this.renderer.setSize(  width, height );
     //this.renderer.render( scene, camera, null, false );
-    this.takeShot = true;
-
     //this.targetC.render(this.bufferImage.scene, this.orthoCamera, true);
-
     //const dataURL = this.renderer.domElement.toDataURL('image/png');
-
     // save
     //this.saveDataURI(this.defaultFileName('.png'), dataURL);
-
     // reset to old dimensions (cheat version)
     //onWindowResize();
+    this.takeShot = true;
   }
-
 
   dataURIToBlob(dataURI) {
     const binStr = window.atob(dataURI.split(',')[1]);
@@ -623,6 +616,10 @@ class App {
       //this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE5;
 
       // fader starts at 0.0 inputting iChannel 1
+      if (iTime < this.timing){
+        this.bufferB.uniforms['iChannel1'].value = this.inputIMAGE;
+        this.fader = 0.0;
+      }
       if (iTime > this.timing * 1. && iTime < this.timing * 2.) {
         if (this.fader < 1.0) {
           this.fader = Math.min(1., this.fader + this.fadeTime);
@@ -698,12 +695,13 @@ class App {
         this.saveDataURI(this.defaultFileName('.png'), dataURL);
         this.takeShot = false;
       }
-
+      /*
       if (this.resizeRendererToDisplaySize(this.renderer)) {
         const canvas = this.renderer.domElement;
         //camera.aspect = canvas.clientWidth / canvas.clientHeight;
         //camera.updateProjectionMatrix();
       }
+      */
     });
   }
 }
@@ -782,32 +780,29 @@ class BufferManager {
 //});
 
 // ------ SCRIPT
+
+// ADD STUFF FOR IF THREE JS DIDNT LOAD + IF USER ON MOBILE
 /*
 const domItem = document.querySelector("#c");
 const newItem = document.createElement('#c');
 //newItem.innerHTML = '<a href="/products">Products</a>';
 newItem.innerHTML = '<canvas id="c">  <script src="./build/three.min.js"></script> <script src="./EffectComposer.js"></script><script src="./RenderPass.js"></script><script src="./ShaderPass.js"></script><script src="./CopyShader.js"></script><script src="./FXAAShader.js"></script><script src="./script.js"></script></canvas>'
 domItem.parentNode.replaceChild(newItem, domItem);
-
 */
+
 const canvas = document.querySelector('#c');
 let a = window.innerWidth / window.innerHeight;
-//let width =  window.innerWidth;// 1080;
-//let height = window.innerHeight; // 720;
-//let width = 1080;
-//let height = 720;
 
 let width = canvas.clientWidth;
 let height = canvas.clientHeight;
-console.log('width');
-console.log(width);
+//console.log('width');
+//console.log(width);
 
 // SOUND
 let audio;
 let analyser;
 let data;
 const fftSize = 64;
-//const file = './Audio/Mass_Gloria_1-31-21SOUND_HARP ONLY.mp3';
 const file = './Audio/MFTE_ 02_Gloria_96k_24b.m4a';
 
 var iTime;
@@ -833,20 +828,16 @@ var c3 = new THREE.Vector3(236 / 255, 115 / 255, 34 / 255);
 var c4 = new THREE.Vector3(230 / 255, 180 / 255, 0 / 255);
 var c5 = new THREE.Vector3(193 / 255, 62 / 255, 62 / 255);
 
-
-//const startButton = document.getElementById('startButton'); // there must be a button for sound
-//startButton.addEventListener('click', init);
-
 function toggleError(button) {
   if (button.className === 'visible') {
-    //alert('Error has been hidden!');
+    //alert('play!');
     button.className = '';
     button.innerHTML = 'Play';
     location.reload();
     return false;
 
   } else {
-    //alert('Error has been shown!');
+    //alert('reset!');
     init();
     button.className = 'visible';
     button.innerHTML = 'Reset';
@@ -878,6 +869,7 @@ function init() {
   initVars()
   // animate();
   // app.start();
+  app.fader = 0.0;
   gloriaSound();
 }
 
