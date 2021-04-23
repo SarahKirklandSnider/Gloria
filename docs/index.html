@@ -54,13 +54,15 @@
           console.log("null test");
         }
         
-        if (window.top != window.self) {
-          window.top.addEventListener('load', function (e) {
-            console.log("added listener to parent")
-              location.reload();
-            // Chrome requires returnValue to be set
-            e.returnValue = '';
-          });
+        window.top.addEventListener('load', function (e) {
+          console.log("added listener to parent")
+          if (window.top != window.self) {
+            location.reload();
+          }
+
+          // Chrome requires returnValue to be set
+          e.returnValue = '';
+        });
 
     </script>
    </div>
