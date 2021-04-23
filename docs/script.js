@@ -820,7 +820,7 @@ function toggleError(button) {
     //alert('reset!');
     init();
     button.className = 'visible';
-    button.innerHTML = 'Load new';
+    button.innerHTML = 'Reload';
   }
 }
 
