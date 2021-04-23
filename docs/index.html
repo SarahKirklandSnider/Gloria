@@ -45,17 +45,9 @@
    <div id='footer'>
      <p></p>
      <script> 
-        let isInIframe = window.frameElement && window.frameElement.nodeName == "IFRAME";
-        console.log(isInIframe);
-        console.log(window.frameElement);
-        console.log(window.top);
-        let test = window.top;
-        if (test == null) {
-          console.log("null test");
-        }
-        
+        // reload if iframe
         window.top.addEventListener('load', function (e) {
-          console.log("added listener to parent")
+          //console.log("added listener to parent")
           if (window.top != window.self) {
             location.reload();
           }
