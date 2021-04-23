@@ -47,7 +47,8 @@
      <script> 
         window.onmessage = function(event){
         if (event.data == 'message') {
-            console.log('Message received!');
+            console.log('Message received! Reloading');
+            location.reload(true);
         }
         };
 
