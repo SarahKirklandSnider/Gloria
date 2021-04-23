@@ -45,7 +45,13 @@
    <div id='footer'>
      <p></p>
      <script> 
-      //window.location.reload()
+        window.onmessage = function(event){
+        if (event.data == 'message') {
+            console.log('Message received!');
+        }
+        };
+
+       //window.location.reload()
       let isInIframe = window.frameElement && window.frameElement.nodeName == "IFRAME";
       console.log(isInIframe);
       console.log(window.frameElement);
